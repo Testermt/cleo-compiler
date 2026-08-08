@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GTA SA Online CLEO Compiler</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: '#0c0f14',
+          panel: '#12161d',
+          panel2: '#181d26',
+          hairline: '#242b36',
+          amber: '#e8a33d',
+          amberdim: '#8a6528',
+          teal: '#3fa9a0',
+          teal2: '#2e8a82',
+          bad: '#e05a4e',
+          good: '#57b06b',
+        },
+        fontFamily: {
+          mono: ['"JetBrains Mono"', '"Fira Code"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+          display: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+        },
+      },
+    },
+  };
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  html, body { background: #0c0f14; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: #12161d; }
+  ::-webkit-scrollbar-thumb { background: #242b36; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #303947; }
+
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+  .cursor-blink { animation: blink 1.2s step-end infinite; }
+
+  .hex-addr {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.05em;
+  }
+
+  #editor-container { height: 58vh; min-height: 380px; }
+
+  .btn-press:active { transform: translateY(1px); }
+
+  .error-line-highlight {
+    background-color: rgba(224, 90, 78, 0.20) !important;
+    border-left: 3px solid #e05a4e !important;
+  }
+</style>
+</head>
+<body class="bg-ink text-gray-200 font-mono min-h-screen flex flex-col">
+
+  <!-- File Inputs -->
+  <input type="file" id="file-upload-input" accept=".txt,.cs" class="hidden" />
+  <input type="file" id="decompile-upload-input" accept=".cs,.csa,.csi" class="hidden" />
+  <input type="file" id="db-upload-input" accept=".db" class="hidden" />
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="border-b border-hairline bg-panel/80 backdrop-blur">
+    <div class="max-w-6xl mx-auto px-5 py-4 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-sm bg-amber/10 border border-amber/40 flex items-center justify-center text-amber font-display font-bold text-sm">
+          CS
+        </div>
+        <div>
+          <h1 class="font-display font-semibold text-gray-100 text-base sm:text-lg tracking-tight">
+            GTA SA <span class="text-amber">Online CLEO</span> Compiler
+          </h1>
+          <p class="text-[11px] text-gray-500 hex-addr">0x0000 &middot; script.txt &rarr; script.cs / .csa / .csi &middot; sanny.exe / wine</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span id="server-status" class="hidden sm:flex items-center gap-1.5 text-[11px] text-gray-500 border border-hairline rounded-sm px-2 py-1">
+          <span id="server-dot" class="w-1.5 h-1.5 rounded-full bg-gray-600"></span>
+          <span id="server-status-text">checking backend&hellip;</span>
+        </span>
+        <button id="opcode-btn"
+          class="btn-press text-[13px] px-3 py-1.5 rounded-sm border border-hairline text-gray-300 hover:text-amber hover:border-amber/50 transition-colors">
+          Opcode Reference
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== MAIN ===================== -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-5 py-6 flex flex-col gap-4">
+
+    <!-- Primary Toolbar -->
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="flex flex-wrap items-center gap-3 text-[12px] text-gray-500">
+        <div class="flex items-center gap-2">
+          <span class="hex-addr text-gray-600">TARGET GAME</span>
+          <select id="gameSelect" class="bg-panel2 text-gray-200 border border-hairline rounded-sm px-2 py-1 text-[12px] focus:outline-none focus:border-amber">
+            <option value="sa" selected>GTA San Andreas (PC - .cs)</option>
+            <option value="sa_mobile_csa">GTA San Andreas (Mobile - .csa Auto)</option>
+            <option value="sa_mobile_csi">GTA San Andreas (Mobile - .csi Touch)</option>
+            <option value="vc">GTA Vice City (PC - .cs)</option>
+            <option value="vc_mobile_csa">GTA Vice City (Mobile - .csa)</option>
+            <option value="vc_mobile_csi">GTA Vice City (Mobile - .csi)</option>
+            <option value="gta3">GTA III (PC - .cs)</option>
+            <option value="gta3_mobile_csa">GTA III (Mobile - .csa)</option>
+            <option value="gta3_mobile_csi">GTA III (Mobile - .csi)</option>
+          </select>
+        </div>
+        <span class="text-gray-700">|</span>
+        <div class="flex items-center gap-2">
+          <label for="templateSelect" class="hex-addr text-gray-600">TEMPLATE</label>
+          <select id="templateSelect" class="bg-panel2 text-amber border border-hairline rounded-sm px-2 py-1 text-[12px] focus:outline-none focus:border-amber">
+            <option value="default" selected>Select Template...</option>
+            <option value="spawner">Car Spawner (Infernus)</option>
+            <option value="teleport">Teleport to Marker</option>
+            <option value="godmode">Player Health & Godmode</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="db-upload-btn"
+          class="btn-press text-[13px] px-3 py-2 rounded-sm border border-hairline text-gray-300 hover:text-amber hover:border-amber/50 transition-colors flex items-center gap-1.5">
+          <span>🧩 Custom .db</span>
+        </button>
+        <button id="decompile-btn"
+          class="btn-press text-[13px] px-3 py-2 rounded-sm border border-hairline text-gray-300 hover:text-amber hover:border-amber/50 transition-colors flex items-center gap-1.5">
+          <span>🔓 Decompile .cs</span>
+        </button>
+        <button id="upload-btn"
+          class="btn-press text-[13px] px-3 py-2 rounded-sm border border-hairline text-gray-300 hover:text-amber hover:border-amber/50 transition-colors flex items-center gap-1.5">
+          <span>📁 Upload .txt</span>
+        </button>
+        <button id="clear-btn"
+          class="btn-press text-[13px] px-3 py-2 rounded-sm border border-hairline text-gray-400 hover:text-gray-100 hover:border-gray-500 transition-colors">
+          Clear
+        </button>
+        <button id="compile-btn"
+          class="btn-press text-[13px] px-4 py-2 rounded-sm bg-amber text-ink font-semibold hover:bg-amber/90 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+          <svg id="compile-spinner" class="hidden animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <span id="compile-btn-text">Compile &amp; Download</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Advanced CLI Flags Bar -->
+    <div class="bg-panel2/60 border border-hairline rounded-sm px-3.5 py-2 flex flex-wrap items-center justify-between gap-3 text-[11.5px]">
+      <div class="flex flex-wrap items-center gap-4 text-gray-400">
+        <span class="text-amber font-display font-semibold hex-addr">CLI FLAGS:</span>
+        <label class="flex items-center gap-1.5 cursor-pointer hover:text-amber transition-colors">
+          <input type="checkbox" id="check-conditions-cb" class="accent-amber rounded-sm" checked>
+          <span>--check-conditions</span>
+        </label>
+        <label class="flex items-center gap-1.5 cursor-pointer hover:text-amber transition-colors">
+          <input type="checkbox" id="no-splash-cb" class="accent-amber rounded-sm" checked>
+          <span>--no-splash</span>
+        </label>
+        <label class="flex items-center gap-1.5 cursor-pointer hover:text-amber transition-colors">
+          <input type="checkbox" id="case-sensitive-cb" class="accent-amber rounded-sm">
+          <span>--case-sensitive</span>
+        </label>
+      </div>
+
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <label for="custom-flags-input" class="hex-addr text-gray-500 whitespace-nowrap">EXTRA FLAGS:</label>
+        <input type="text" id="custom-flags-input" placeholder="e.g. --constant MODE=1" 
+          class="bg-panel text-gray-200 border border-hairline rounded-sm px-2 py-0.5 text-[11px] w-full sm:w-48 focus:outline-none focus:border-amber font-mono" />
+      </div>
+    </div>
+
+    <!-- Editor -->
+    <div class="rounded-sm border border-hairline overflow-hidden shadow-2xl shadow-black/40">
+      <div class="bg-panel2 border-b border-hairline px-3 py-1.5 flex items-center justify-between text-[11px] text-gray-500">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-bad/70"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-amber/70"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-good/70"></span>
+          <span id="loaded-file-name" class="ml-2 hex-addr text-gray-300">script.txt</span>
+          <span id="custom-db-tag" class="hidden ml-2 px-1.5 py-0.5 text-[10px] bg-amber/20 text-amber rounded border border-amber/30">custom classes.db loaded</span>
+        </div>
+        <span class="text-gray-600 text-[10px] hidden sm:inline">Monaco Editor &middot; Realtime GUI Linter Active</span>
+      </div>
+      <div id="editor-container"></div>
+    </div>
+
+    <!-- Console -->
+    <div class="rounded-sm border border-hairline bg-panel flex flex-col">
+      <div class="border-b border-hairline px-3 py-1.5 flex items-center justify-between">
+        <span class="text-[11px] text-gray-500 hex-addr">CONSOLE</span>
+        <button id="console-clear" class="text-[11px] text-gray-600 hover:text-gray-300 transition-colors">clear</button>
+      </div>
+      <div id="console-log" class="h-40 overflow-y-auto px-3 py-2 text-[12.5px] leading-relaxed space-y-1">
+        <div class="text-gray-600">&gt; awaiting compile&hellip; <span class="cursor-blink">_</span></div>
+      </div>
+    </div>
+
+    <p class="text-[11px] text-gray-600 text-center pt-1">
+      Free &middot; runs your source through Sanny Builder server-side &middot; nothing is stored after compilation.
+    </p>
+  </main>
+
+  <!-- ===================== OPCODE MODAL ===================== -->
+  <div id="opcode-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-panel border border-hairline rounded-sm max-w-2xl w-full max-h-[80vh] flex flex-col">
+      <div class="border-b border-hairline px-4 py-3 flex items-center justify-between">
+        <h2 class="font-display text-sm text-gray-200">Common CLEO Opcodes</h2>
+        <button id="opcode-close" class="text-gray-500 hover:text-gray-200 text-lg leading-none">&times;</button>
+      </div>
+      <div class="overflow-y-auto px-4 py-3 text-[12.5px]">
+        <table class="w-full">
+          <thead>
+            <tr class="text-gray-600 text-left border-b border-hairline">
+              <th class="pb-2 pr-4 hex-addr">OPCODE</th>
+              <th class="pb-2">DESCRIPTION</th>
+            </tr>
+          </thead>
+          <tbody id="opcode-table" class="text-gray-300"></tbody>
+        </table>
+        <p class="text-gray-600 mt-3 text-[11px]">
+          For the full opcode database, see the community-maintained
+          <a href="https://library.sannybuilder.com/" target="_blank" rel="noopener" class="text-amber hover:underline">Sanny Builder opcode library</a>.
+        </p>
+      </div>
+    </div>
+  </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.49.0/min/vs/loader.min.js"></script>
+<script>
+  const API_BASE = window.CLEO_API_BASE || 'https://cleo-compiler-backend.onrender.com';
+
+  const TEMPLATES = {
+    spawner: `{$CLEO .cs}\n\n0000: NOP\n03A4: name_thread 'SPAWN'\n\n:MAIN\nwait 250\nif\n  0256: player $PLAYER_CHAR defined\njf @MAIN\n\n0247: load_model 411\n:WAIT_MODEL\nwait 0\nif\n  0248: model 411 available\njf @WAIT_MODEL\n\n04C4: store_coords_to 0@ 1@ 2@ from_actor $PLAYER_ACTOR offset 0.0 4.0 0.0\n00A5: 3@ = create_car 411 at 0@ 1@ 2@\n0249: release_model 411\n0A93: end_custom_thread`,
+    teleport: `{$CLEO .cs}\n\n0000: NOP\n03A4: name_thread 'TELE'\n\n:MAIN\nwait 0\nif and\n  0256: player $PLAYER_CHAR defined\n  025D: target_blip_active\njf @MAIN\n\n02E3: locate_target_blip_and_get_coords_to 0@ 1@ 2@\n00A1: put_actor $PLAYER_ACTOR at 0@ 1@ 2@\n01E5: show_text_lowpriority "Teleported!" time 2000 flag 1\nwait 1000\njump @MAIN`,
+    godmode: `{$CLEO .cs}\n\n0000: NOP\n03A4: name_thread 'GOD'\n\n:MAIN\nwait 500\nif\n  0256: player $PLAYER_CHAR defined\njf @MAIN\n\n0223: set_actor $PLAYER_ACTOR health_to 1000\n02AB: set_actor $PLAYER_ACTOR immunities BP 1 FP 1 EP 1 CP 1 MP 1\n01E5: show_text_lowpriority "Godmode Activated" time 2000 flag 1\n0A93: end_custom_thread`
+  };
+
+  const DEFAULT_SCRIPT = `{$CLEO .cs}\n\n0000: NOP\n\n// Example: spawn a marker at the player's position\n03A4: name_thread 'MAIN'\n\n:MAIN_START\nwait 0\nif\n  0256:   player $PLAYER_CHAR defined\njf @MAIN_START\n\n0001: wait 0\n0417: create_pickup_marker_at 0.0 0.0 0.0 color 1\n\n:MAIN_LOOP\nwait 250\njump @MAIN_LOOP\n`;
+
+  const OPCODES = [
+    ['0000:', 'NOP — no operation'],
+    ['0001:', 'wait N — pauses the thread for N ms'],
+    ['0002:', 'jump @label — unconditional jump'],
+    ['0004:', 'set var = value'],
+    ['0038:', 'compare var to value'],
+    ['00D6:', 'if / jf — conditional jump helpers'],
+    ['0247:', 'request_model — loads a model into memory'],
+    ['00A5:', 'player_actor / create actor at coords'],
+    ['03A4:', "name_thread 'NAME'"],
+    ['0417:', 'create_pickup_marker_at x y z color N'],
+  ];
+
+  // OPCODE MODAL
+  const opcodeTable = document.getElementById('opcode-table');
+  OPCODES.forEach(([code, desc]) => {
+    const row = document.createElement('tr');
+    row.className = 'border-b border-hairline/50';
+    row.innerHTML = `<td class="py-1.5 pr-4 text-amber hex-addr">${code}</td><td class="py-1.5 text-gray-400">${desc}</td>`;
+    opcodeTable.appendChild(row);
+  });
+
+  const opcodeModal = document.getElementById('opcode-modal');
+  document.getElementById('opcode-btn').addEventListener('click', () => opcodeModal.classList.remove('hidden'));
+  document.getElementById('opcode-close').addEventListener('click', () => opcodeModal.classList.add('hidden'));
+  opcodeModal.addEventListener('click', (e) => { if (e.target === opcodeModal) opcodeModal.classList.add('hidden'); });
+
+  // CONSOLE LOG
+  const consoleLog = document.getElementById('console-log');
+  function logLine(text, type = 'info') {
+    const colors = { info: 'text-gray-400', success: 'text-good', error: 'text-bad', warn: 'text-amber' };
+    const line = document.createElement('div');
+    line.className = colors[type] || colors.info;
+    const ts = new Date().toLocaleTimeString('en-GB', { hour12: false });
+    line.innerHTML = `<span class="text-gray-700">[${ts}]</span> ${text}`;
+    consoleLog.appendChild(line);
+    consoleLog.scrollTop = consoleLog.scrollHeight;
+  }
+  document.getElementById('console-clear').addEventListener('click', () => { consoleLog.innerHTML = ''; });
+
+  // BACKEND HEALTH CHECK
+  const dot = document.getElementById('server-dot');
+  const statusText = document.getElementById('server-status-text');
+  fetch(`${API_BASE}/health`).then(r => r.ok ? r.json() : Promise.reject())
+    .then(data => {
+      dot.className = 'w-1.5 h-1.5 rounded-full ' + (data.sannyPresent ? 'bg-good' : 'bg-amber');
+      statusText.textContent = data.sannyPresent ? 'backend online' : 'backend online, compiler missing';
+    })
+    .catch(() => {
+      dot.className = 'w-1.5 h-1.5 rounded-full bg-bad';
+      statusText.textContent = 'backend unreachable';
+    });
+
+  // CUSTOM .DB FILE UPLOAD
+  let uploadedDbBase64 = null;
+  const dbUploadBtn = document.getElementById('db-upload-btn');
+  const dbUploadInput = document.getElementById('db-upload-input');
+  const customDbTag = document.getElementById('custom-db-tag');
+
+  dbUploadBtn.addEventListener('click', () => dbUploadInput.click());
+
+  dbUploadInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      uploadedDbBase64 = event.target.result.split(',')[1] || event.target.result;
+      customDbTag.classList.remove('hidden');
+      logLine(`Custom class database loaded: <span class="text-amber">${escapeHtml(file.name)}</span>`, 'success');
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // UPLOAD SCRIPT FILE (.txt / .cs)
+  const uploadBtn = document.getElementById('upload-btn');
+  const fileInput = document.getElementById('file-upload-input');
+  const fileNameDisplay = document.getElementById('loaded-file-name');
+
+  uploadBtn.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (editor) {
+        clearEditorErrorMarkers();
+        editor.setValue(event.target.result);
+        fileNameDisplay.textContent = file.name;
+        logLine(`Uploaded file loaded: <span class="text-amber">${escapeHtml(file.name)}</span>`, 'success');
+      }
+    };
+    reader.readAsText(file);
+    fileInput.value = '';
+  });
+
+  // DECOMPILE FILE (.cs / .csa / .csi)
+  const decompileBtn = document.getElementById('decompile-btn');
+  const decompileInput = document.getElementById('decompile-upload-input');
+
+  decompileBtn.addEventListener('click', () => decompileInput.click());
+
+  decompileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const selectedGame = document.getElementById('gameSelect').value;
+    logLine(`Reading file <span class="text-amber">${escapeHtml(file.name)}</span> for decompilation…`, 'info');
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64Data = event.target.result.split(',')[1] || event.target.result;
+      setCompiling(true);
+
+      try {
+        const response = await fetch(`${API_BASE}/api/decompile`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileBase64: base64Data, game: selectedGame }),
+        });
+
+        const data = await response.json();
+        if (data.cmd) {
+          logLine(`Command: <span class="text-amber">${escapeHtml(data.cmd)}</span>`, 'warn');
+        }
+
+        if (!response.ok || !data.success) {
+          logLine(`Decompilation failed: ${escapeHtml(data.error || 'Unknown error')}`, 'error');
+          return;
+        }
+
+        if (editor && data.code) {
+          clearEditorErrorMarkers();
+          editor.setValue(data.code);
+          fileNameDisplay.textContent = file.name.replace(/\.(cs|csa|csi)$/i, '.txt');
+          logLine(`Successfully decompiled <span class="text-good">${escapeHtml(file.name)}</span>!`, 'success');
+        }
+      } catch (err) {
+        logLine(`Error during decompilation request: ${escapeHtml(err.message)}`, 'error');
+      } finally {
+        setCompiling(false);
+        decompileInput.value = '';
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // REALTIME GUI CLEO LINTER ENGINE (With Class Syntax Support)
+  function validateCleoSyntax(code) {
+    if (!editor || !window.monaco) return [];
+    const model = editor.getModel();
+    if (!model) return [];
+
+    const lines = code.split('\n');
+    const markers = [];
+    const definedLabels = new Set();
+    const referencedLabels = [];
+
+    // Pass 1: Collect & check duplicate labels
+    lines.forEach((lineText, idx) => {
+      const lineNum = idx + 1;
+      const clean = lineText.replace(/\/\/.*$/, '').trim();
+      if (!clean) return;
+
+      const labelMatch = clean.match(/^:([A-Za-z0-9_]+)/);
+      if (labelMatch) {
+        const lbl = labelMatch[1].toUpperCase();
+        if (definedLabels.has(lbl)) {
+          markers.push({
+            startLineNumber: lineNum,
+            startColumn: 1,
+            endLineNumber: lineNum,
+            endColumn: model.getLineMaxColumn(lineNum),
+            message: `Symbol '${labelMatch[1]}' is already defined.`,
+            severity: monaco.MarkerSeverity.Error
+          });
+        } else {
+          definedLabels.add(lbl);
+        }
+      }
+    });
+
+    // Pass 2: Parameter, Opcode, & Class syntax checks
+    lines.forEach((lineText, idx) => {
+      const lineNum = idx + 1;
+      const clean = lineText.replace(/\/\/.*$/, '').trim();
+      if (!clean || clean.startsWith('{$')) return;
+
+      // Check Label references
+      const refMatches = clean.matchAll(/(?:jump|jf|gosub)\s+@([A-Za-z0-9_]+)/gi);
+      for (const m of refMatches) {
+        referencedLabels.push({ name: m[1].toUpperCase(), originalName: m[1], line: lineNum });
+      }
+
+      // Check empty Class Method calls like "Car.Create()" or "Actor.SetHealth()"
+      const classEmptyMatch = clean.match(/([A-Z_][A-Z0-9_]*)\.([A-Z_][A-Z0-9_]*)\(\s*\)/i);
+      if (classEmptyMatch) {
+        markers.push({
+          startLineNumber: lineNum,
+          startColumn: 1,
+          endLineNumber: lineNum,
+          endColumn: model.getLineMaxColumn(lineNum),
+          message: `Class method '${classEmptyMatch[1]}.${classEmptyMatch[2]}' appears to be missing parameters.`,
+          severity: monaco.MarkerSeverity.Warning
+        });
+      }
+
+      // Check 'wait' opcode missing parameter (ignoring Class.Wait syntax)
+      if (!clean.includes('.') && /\b(?:0001:\s*)?wait\s*$/i.test(clean)) {
+        markers.push({
+          startLineNumber: lineNum,
+          startColumn: 1,
+          endLineNumber: lineNum,
+          endColumn: model.getLineMaxColumn(lineNum),
+          message: "Opcode 'wait' expects 1 numeric parameter (e.g., wait 0 or wait 250).",
+          severity: monaco.MarkerSeverity.Error
+        });
+      }
+
+      // Check 'player defined' missing actor/player variable
+      if (/\b0256:\s*player\s*defined\b/i.test(clean) || /\b0256:\s*player\s*$/i.test(clean)) {
+        markers.push({
+          startLineNumber: lineNum,
+          startColumn: 1,
+          endLineNumber: lineNum,
+          endColumn: model.getLineMaxColumn(lineNum),
+          message: "Opcode '0256: player defined' expects a player variable (e.g., 0256: player $PLAYER_CHAR defined).",
+          severity: monaco.MarkerSeverity.Error
+        });
+      }
+
+      // Check 'name_thread' missing string
+      if (/\b(?:03A4:\s*)?name_thread\s*$/i.test(clean)) {
+        markers.push({
+          startLineNumber: lineNum,
+          startColumn: 1,
+          endLineNumber: lineNum,
+          endColumn: model.getLineMaxColumn(lineNum),
+          message: "Opcode 'name_thread' expects a thread name string in quotes (e.g., name_thread 'MAIN').",
+          severity: monaco.MarkerSeverity.Error
+        });
+      }
+
+      // Check 'load_model' / 'request_model' missing model ID
+      if (/\b(?:0247:\s*)?(?:load_model|request_model)\s*$/i.test(clean)) {
+        markers.push({
+          startLineNumber: lineNum,
+          startColumn: 1,
+          endLineNumber: lineNum,
+          endColumn: model.getLineMaxColumn(lineNum),
+          message: "Opcode 'load_model' expects a model ID parameter (e.g., load_model 411).",
+          severity: monaco.MarkerSeverity.Error
+        });
+      }
+    });
+
+    // Pass 3: Validate undefined label references
+    referencedLabels.forEach(ref => {
+      if (!definedLabels.has(ref.name)) {
+        markers.push({
+          startLineNumber: ref.line,
+          startColumn: 1,
+          endLineNumber: ref.line,
+          endColumn: model.getLineMaxColumn(ref.line),
+          message: `Label '@${ref.originalName}' is not defined in script.`,
+          severity: monaco.MarkerSeverity.Error
+        });
+      }
+    });
+
+    return markers;
+  }
+
+  // MONACO EDITOR & ERROR HIGHLIGHT SETUP
+  require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.49.0/min/vs' } });
+
+  let editor;
+  let errorDecorations = [];
+
+  function clearEditorErrorMarkers() {
+    if (editor && window.monaco) {
+      const model = editor.getModel();
+      monaco.editor.setModelMarkers(model, 'cleo-compiler', []);
+      monaco.editor.setModelMarkers(model, 'cleo-gui-linter', []);
+      errorDecorations = editor.deltaDecorations(errorDecorations, []);
+    }
+  }
+
+  function setEditorErrorMarker(lineNum, message) {
+    if (editor && window.monaco && lineNum && typeof lineNum === 'number') {
+      const model = editor.getModel();
+      const maxLines = model.getLineCount();
+      const safeLine = Math.max(1, Math.min(Math.floor(lineNum), maxLines));
+
+      monaco.editor.setModelMarkers(model, 'cleo-compiler', [{
+        startLineNumber: safeLine,
+        startColumn: 1,
+        endLineNumber: safeLine,
+        endColumn: model.getLineMaxColumn(safeLine),
+        message: message,
+        severity: monaco.MarkerSeverity.Error
+      }]);
+
+      errorDecorations = editor.deltaDecorations(errorDecorations, [
+        {
+          range: new monaco.Range(safeLine, 1, safeLine, model.getLineMaxColumn(safeLine)),
+          options: { isWholeLine: true, className: 'error-line-highlight' }
+        }
+      ]);
+
+      editor.revealLineInCenter(safeLine);
+      editor.setPosition({ lineNumber: safeLine, column: 1 });
+    }
+  }
+
+  require(['vs/editor/editor.main'], function () {
+    monaco.languages.register({ id: 'cleo' });
+
+    monaco.languages.setMonarchTokensProvider('cleo', {
+      ignoreCase: true,
+      tokenizer: {
+        root: [
+          [/\{\$.*?\}/, 'annotation'],
+          [/\/\/.*$/, 'comment'],
+          [/:[A-Z_][A-Z0-9_]*\b/, 'label'],
+          [/@[A-Z_][A-Z0-9_]*\b/, 'label.ref'],
+          [/\b[0-9A-Fa-f]{4}:/, 'opcode'],
+          [/\b(NOP|WAIT|MODEL|PLAYER_ACTOR|IF|JF|JUMP|GOTO|GOSUB|RETURN|ELSE|ENDIF|WHILE|ENDWHILE|THREAD|END_THREAD|SET|AND|OR|NOT|TERMINATE_THIS_CUSTOM_SCRIPT)\b/, 'keyword'],
+          [/\b0x[0-9A-Fa-f]+\b/, 'number.hex'],
+          [/\b\d+\.\d+\b/, 'number.float'],
+          [/\b\d+\b/, 'number'],
+          [/'[^']*'/, 'string'],
+          [/"[^"]*"/, 'string'],
+          [/\$[A-Za-z_][A-Za-z0-9_]*/, 'variable'],
+        ],
+      },
+    });
+
+    monaco.editor.defineTheme('cleo-dark', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'opcode', foreground: 'e8a33d', fontStyle: 'bold' },
+        { token: 'keyword', foreground: '7fb3d5' },
+        { token: 'comment', foreground: '5c6672', fontStyle: 'italic' },
+        { token: 'label', foreground: '57b06b', fontStyle: 'bold' },
+        { token: 'label.ref', foreground: '57b06b' },
+        { token: 'number', foreground: 'c9a876' },
+        { token: 'number.hex', foreground: 'c9a876' },
+        { token: 'number.float', foreground: 'c9a876' },
+        { token: 'string', foreground: 'd68a6d' },
+        { token: 'variable', foreground: 'e0b3e6' },
+        { token: 'annotation', foreground: '8a6528', fontStyle: 'bold' },
+      ],
+      colors: {
+        'editor.background': '#0e1116',
+        'editor.lineHighlightBackground': '#161b22',
+        'editorLineNumber.foreground': '#3a4451',
+        'editorLineNumber.activeForeground': '#e8a33d',
+        'editorGutter.background': '#0e1116',
+        'editorCursor.foreground': '#e8a33d',
+      },
+    });
+
+    editor = monaco.editor.create(document.getElementById('editor-container'), {
+      value: DEFAULT_SCRIPT,
+      language: 'cleo',
+      theme: 'cleo-dark',
+      fontFamily: '"JetBrains Mono", monospace',
+      fontSize: 13,
+      minimap: { enabled: false },
+      automaticLayout: true,
+      scrollBeyondLastLine: false,
+      renderLineHighlight: 'all',
+      padding: { top: 12 },
+    });
+
+    let lintTimeout;
+    editor.onDidChangeModelContent(() => {
+      clearTimeout(lintTimeout);
+      lintTimeout = setTimeout(() => {
+        const markers = validateCleoSyntax(editor.getValue());
+        const model = editor.getModel();
+        monaco.editor.setModelMarkers(model, 'cleo-gui-linter', markers);
+      }, 300);
+    });
+
+    setTimeout(() => {
+      const markers = validateCleoSyntax(editor.getValue());
+      monaco.editor.setModelMarkers(editor.getModel(), 'cleo-gui-linter', markers);
+    }, 500);
+  });
+
+  // TEMPLATES SELECTION
+  document.getElementById('templateSelect').addEventListener('change', (e) => {
+    const val = e.target.value;
+    if (TEMPLATES[val] && editor) {
+      clearEditorErrorMarkers();
+      editor.setValue(TEMPLATES[val]);
+      fileNameDisplay.textContent = 'script.txt';
+      logLine(`Loaded template: <span class="text-amber">${val}</span>`, 'info');
+    }
+  });
+
+  // COMPILE / DOWNLOAD
+  const compileBtn = document.getElementById('compile-btn');
+  const compileBtnText = document.getElementById('compile-btn-text');
+  const compileSpinner = document.getElementById('compile-spinner');
+
+  function setCompiling(isCompiling) {
+    compileBtn.disabled = isCompiling;
+    compileSpinner.classList.toggle('hidden', !isCompiling);
+    compileBtnText.textContent = isCompiling ? 'Processing…' : 'Compile & Download';
+  }
+
+  compileBtn.addEventListener('click', async () => {
+    if (!editor) return;
+    const code = editor.getValue();
+    const selectedGame = document.getElementById('gameSelect').value;
+    const caseSensitive = document.getElementById('case-sensitive-cb').checked;
+    const checkConditions = document.getElementById('check-conditions-cb').checked;
+    const noSplash = document.getElementById('no-splash-cb').checked;
+    const customFlags = document.getElementById('custom-flags-input').value;
+
+    if (!code.trim()) {
+      logLine('Nothing to compile — the editor is empty.', 'warn');
+      return;
+    }
+
+    const linterErrors = validateCleoSyntax(code);
+    if (linterErrors.length > 0) {
+      const firstErr = linterErrors[0];
+      logLine(`GUI Linter Error: Line ${firstErr.startLineNumber} — ${escapeHtml(firstErr.message)}`, 'error');
+      setEditorErrorMarker(firstErr.startLineNumber, firstErr.message);
+      return;
+    }
+
+    clearEditorErrorMarkers();
+    setCompiling(true);
+    logLine(`Sending script to compiler (${selectedGame})…`, 'info');
+
+    try {
+      const response = await fetch(`${API_BASE}/api/compile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          code, 
+          game: selectedGame, 
+          caseSensitive, 
+          checkConditions,
+          noSplash,
+          customFlags,
+          customDbBase64: uploadedDbBase64 
+        }),
+      });
+
+      const contentType = response.headers.get('content-type') || '';
+      const cmdHeader = response.headers.get('x-compiler-cmd');
+
+      if (!response.ok || contentType.includes('application/json')) {
+        const data = await response.json().catch(() => ({}));
+        
+        const cmdToLog = data.cmd || cmdHeader;
+        if (cmdToLog) {
+          logLine(`Command: <span class="text-amber">${escapeHtml(cmdToLog)}</span>`, 'warn');
+        }
+
+        const message = data.error || `Compilation failed (HTTP ${response.status}).`;
+        logLine(escapeHtml(message), 'error');
+
+        if (data.line && typeof data.line === 'number') {
+          setEditorErrorMarker(data.line, message);
+        }
+        return;
+      }
+
+      if (cmdHeader) {
+        logLine(`Command: <span class="text-amber">${escapeHtml(cmdHeader)}</span>`, 'warn');
+      }
+
+      let ext = '.cs';
+      if (selectedGame.includes('_csi')) {
+        ext = '.csi';
+      } else if (selectedGame.includes('mobile') || selectedGame.includes('_csa')) {
+        ext = '.csa';
+      }
+
+      const filename = `script${ext}`;
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      logLine(`Compilation succeeded — <span class="text-good">${filename}</span> downloaded.`, 'success');
+    } catch (err) {
+      logLine(`Network error: ${escapeHtml(err.message)}. Is the backend reachable?`, 'error');
+    } finally {
+      setCompiling(false);
+    }
+  });
+
+  document.getElementById('clear-btn').addEventListener('click', () => {
+    if (editor) {
+      clearEditorErrorMarkers();
+      editor.setValue('');
+      fileNameDisplay.textContent = 'script.txt';
+      uploadedDbBase64 = null;
+      customDbTag.classList.add('hidden');
+    }
+    logLine('Editor cleared.', 'info');
+  });
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+</script>
+</body>
+</html>
