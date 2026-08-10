@@ -4,15 +4,23 @@
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-8973LHLFH8"></script>
 <script>
+document.addEventListener('focusin', function(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.closest('.monaco-editor')) {
+    const viewport = document.querySelector('meta[name=viewport]');
+    if (viewport) {
+      viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0');
+    }
+  }
+});
+
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-8973LHLFH8');
 </script>
 
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>GTA SA Online CLEO Compiler</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
@@ -47,33 +55,22 @@
   ::-webkit-scrollbar-track { background: #12161d; }
   ::-webkit-scrollbar-thumb { background: #242b36; border-radius: 4px; }
   ::-webkit-scrollbar-thumb:hover { background: #303947; }
-
   @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
   .cursor-blink { animation: blink 1.2s step-end infinite; }
-
-  .hex-addr {
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.05em;
-  }
-
+  .hex-addr { font-variant-numeric: tabular-nums; letter-spacing: 0.05em; }
   #editor-container { height: 58vh; min-height: 380px; }
-
   .btn-press:active { transform: translateY(1px); }
-
-  .error-line-highlight {
-    background-color: rgba(224, 90, 78, 0.20) !important;
-    border-left: 3px solid #e05a4e !important;
-  }
+  .error-line-highlight { background-color: rgba(224, 90, 78, 0.20) !important; border-left: 3px solid #e05a4e !important; }
+  @media screen and (max-width: 768px) { .monaco-editor { font-size: 16px !important; } }
 </style>
 </head>
 <body class="bg-ink text-gray-200 font-mono min-h-screen flex flex-col">
 
-  <!-- File Inputs -->
-  <input type="file" id="file-upload-input" accept=".txt,.cs" class="hidden" />
+  <input type="file" id="file-upload-input" accept=".txt,.cs,.csa,.csi" class="hidden" />
   <input type="file" id="decompile-upload-input" accept=".cs,.csa,.csi" class="hidden" />
   <input type="file" id="db-upload-input" accept=".db" class="hidden" />
 
-  <!-- ===================== HEADER ===================== -->
+  <!-- HEADER -->
   <header class="border-b border-hairline bg-panel/80 backdrop-blur">
     <div class="max-w-6xl mx-auto px-5 py-4 flex items-center justify-between gap-4">
       <div class="flex items-center gap-3">
@@ -84,7 +81,7 @@
           <h1 class="font-display font-semibold text-gray-100 text-base sm:text-lg tracking-tight">
             GTA SA <span class="text-amber">Online CLEO</span> Compiler
           </h1>
-          <p class="text-[11px] text-gray-500 hex-addr">0x0000 &middot; script.txt &rarr; script.cs / .csa / .csi &middot; sanny.exe / wine</p>
+          <p class="text-[11px] text-gray-500 hex-addr">0x0000 &middot; script.txt &rarr; dynamic extension &middot; sanny.exe / wine</p>
         </div>
       </div>
 
@@ -101,16 +98,16 @@
     </div>
   </header>
 
-  <!-- ===================== MAIN ===================== -->
+  <!-- MAIN -->
   <main class="flex-1 max-w-6xl w-full mx-auto px-5 py-6 flex flex-col gap-4">
 
-<!-- 👉 Yahan apna Telegram Button add kar sakte hain -->
-    <div style="text-align: center; margin: 10px 0;">
+    <div style="text-align: center; margin: 5px 0;">
         <a href="https://t.me/TechboyMaster" target="_blank" style="background: #0088cc; color: #fff; padding: 10px 18px; border-radius: 4px; text-decoration: none; font-size: 12.5px; font-weight: bold; display: inline-block;">
             💬 Contact on Telegram (Report Bug)
         </a>
     </div>
-    <!-- Primary Toolbar -->
+
+    <!-- Toolbar -->
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div class="flex flex-wrap items-center gap-3 text-[12px] text-gray-500">
         <div class="flex items-center gap-2">
@@ -146,11 +143,11 @@
         </button>
         <button id="decompile-btn"
           class="btn-press text-[13px] px-3 py-2 rounded-sm border border-hairline text-gray-300 hover:text-amber hover:border-amber/50 transition-colors flex items-center gap-1.5">
-          <span>🔓 Decompile .cs</span>
+          <span>🔓 Decompile File</span>
         </button>
         <button id="upload-btn"
           class="btn-press text-[13px] px-3 py-2 rounded-sm border border-hairline text-gray-300 hover:text-amber hover:border-amber/50 transition-colors flex items-center gap-1.5">
-          <span>📁 Upload .txt</span>
+          <span>📁 Upload Script</span>
         </button>
         <button id="clear-btn"
           class="btn-press text-[13px] px-3 py-2 rounded-sm border border-hairline text-gray-400 hover:text-gray-100 hover:border-gray-500 transition-colors">
@@ -168,9 +165,9 @@
     </div>
 
     <!-- Advanced CLI Flags Bar -->
-    <div class="bg-panel2/60 border border-hairline rounded-sm px-3.5 py-2 flex flex-wrap items-center justify-between gap-3 text-[11.5px]">
+    <div class="bg-panel2/60 border border-hairline rounded-sm px-3.5 py-3 flex flex-col gap-2.5 text-[11.5px]">
       <div class="flex flex-wrap items-center gap-4 text-gray-400">
-        <span class="text-amber font-display font-semibold hex-addr">CLI FLAGS:</span>
+        <span class="text-amber font-display font-semibold hex-addr">COMPILE FLAGS:</span>
         <label class="flex items-center gap-1.5 cursor-pointer hover:text-amber transition-colors">
           <input type="checkbox" id="check-conditions-cb" class="accent-amber rounded-sm" checked>
           <span>--check-conditions</span>
@@ -185,10 +182,46 @@
         </label>
       </div>
 
-      <div class="flex items-center gap-2 w-full sm:w-auto">
+      <div class="flex flex-wrap items-center gap-3 text-gray-400 border-t border-hairline/60 pt-2">
+        <span class="text-teal font-display font-semibold hex-addr">DECOMPILE FLAGS:</span>
+        <label class="flex items-center gap-1 cursor-pointer hover:text-teal transition-colors">
+          <input type="checkbox" id="use-source-cb" class="accent-teal rounded-sm" checked>
+          <span>--use-source</span>
+        </label>
+        <label class="flex items-center gap-1 cursor-pointer hover:text-teal transition-colors">
+          <input type="checkbox" id="code-offsets-cb" class="accent-teal rounded-sm">
+          <span>CODE_OFFSETS</span>
+        </label>
+        <label class="flex items-center gap-1 cursor-pointer hover:text-teal transition-colors">
+          <input type="checkbox" id="ignore-unknown-cb" class="accent-teal rounded-sm">
+          <span>IGNORE_UNKNOWN</span>
+        </label>
+        <label class="flex items-center gap-1 cursor-pointer hover:text-teal transition-colors">
+          <input type="checkbox" id="var-counter-cb" class="accent-teal rounded-sm">
+          <span>VAR_COUNTER</span>
+        </label>
+        <label class="flex items-center gap-1 cursor-pointer hover:text-teal transition-colors">
+          <input type="checkbox" id="constant-indexes-cb" class="accent-teal rounded-sm">
+          <span>CONSTANT_INDEXES</span>
+        </label>
+        <label class="flex items-center gap-1 cursor-pointer hover:text-teal transition-colors">
+          <input type="checkbox" id="skip-scm-header-cb" class="accent-teal rounded-sm">
+          <span>SKIP_SCM_HEADER</span>
+        </label>
+        <label class="flex items-center gap-1 cursor-pointer hover:text-teal transition-colors">
+          <input type="checkbox" id="skip-extra-info-cb" class="accent-teal rounded-sm">
+          <span>SKIP_EXTRA_INFO</span>
+        </label>
+        <label class="flex items-center gap-1 cursor-pointer hover:text-teal transition-colors">
+          <input type="checkbox" id="sb3-compat-cb" class="accent-teal rounded-sm" checked>
+          <span>SB3_COMPAT</span>
+        </label>
+      </div>
+
+      <div class="flex items-center gap-2 w-full pt-1 border-t border-hairline/60">
         <label for="custom-flags-input" class="hex-addr text-gray-500 whitespace-nowrap">EXTRA FLAGS:</label>
         <input type="text" id="custom-flags-input" placeholder="e.g. --constant MODE=1" 
-          class="bg-panel text-gray-200 border border-hairline rounded-sm px-2 py-0.5 text-[11px] w-full sm:w-48 focus:outline-none focus:border-amber font-mono" />
+          class="bg-panel text-gray-200 border border-hairline rounded-sm px-2 py-0.5 text-[11px] w-full focus:outline-none focus:border-amber font-mono" />
       </div>
     </div>
 
@@ -223,7 +256,7 @@
     </p>
   </main>
 
-  <!-- ===================== OPCODE MODAL ===================== -->
+  <!-- OPCODE MODAL -->
   <div id="opcode-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-panel border border-hairline rounded-sm max-w-2xl w-full max-h-[80vh] flex flex-col">
       <div class="border-b border-hairline px-4 py-3 flex items-center justify-between">
@@ -273,7 +306,6 @@
     ['0417:', 'create_pickup_marker_at x y z color N'],
   ];
 
-  // OPCODE MODAL
   const opcodeTable = document.getElementById('opcode-table');
   OPCODES.forEach(([code, desc]) => {
     const row = document.createElement('tr');
@@ -287,7 +319,6 @@
   document.getElementById('opcode-close').addEventListener('click', () => opcodeModal.classList.add('hidden'));
   opcodeModal.addEventListener('click', (e) => { if (e.target === opcodeModal) opcodeModal.classList.add('hidden'); });
 
-  // CONSOLE LOG
   const consoleLog = document.getElementById('console-log');
   function logLine(text, type = 'info') {
     const colors = { info: 'text-gray-400', success: 'text-good', error: 'text-bad', warn: 'text-amber' };
@@ -300,7 +331,6 @@
   }
   document.getElementById('console-clear').addEventListener('click', () => { consoleLog.innerHTML = ''; });
 
-  // BACKEND HEALTH CHECK
   const dot = document.getElementById('server-dot');
   const statusText = document.getElementById('server-status-text');
   fetch(`${API_BASE}/health`).then(r => r.ok ? r.json() : Promise.reject())
@@ -313,18 +343,15 @@
       statusText.textContent = 'backend unreachable';
     });
 
-  // CUSTOM .DB FILE UPLOAD
   let uploadedDbBase64 = null;
   const dbUploadBtn = document.getElementById('db-upload-btn');
   const dbUploadInput = document.getElementById('db-upload-input');
   const customDbTag = document.getElementById('custom-db-tag');
 
   dbUploadBtn.addEventListener('click', () => dbUploadInput.click());
-
   dbUploadInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (event) => {
       uploadedDbBase64 = event.target.result.split(',')[1] || event.target.result;
@@ -334,17 +361,14 @@
     reader.readAsDataURL(file);
   });
 
-  // UPLOAD SCRIPT FILE (.txt / .cs)
   const uploadBtn = document.getElementById('upload-btn');
   const fileInput = document.getElementById('file-upload-input');
   const fileNameDisplay = document.getElementById('loaded-file-name');
 
   uploadBtn.addEventListener('click', () => fileInput.click());
-
   fileInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (event) => {
       if (editor) {
@@ -358,17 +382,29 @@
     fileInput.value = '';
   });
 
-  // DECOMPILE FILE (.cs / .csa / .csi)
+  // DECOMPILE SCRIPT (Sends dynamic filename and extension to backend)
   const decompileBtn = document.getElementById('decompile-btn');
   const decompileInput = document.getElementById('decompile-upload-input');
 
   decompileBtn.addEventListener('click', () => decompileInput.click());
-
   decompileInput.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     const selectedGame = document.getElementById('gameSelect').value;
+    const useSource = document.getElementById('use-source-cb').checked;
+    
+    const codeOffsets = document.getElementById('code-offsets-cb')?.checked ? '1' : '0';
+    const ignoreUnknown = document.getElementById('ignore-unknown-cb')?.checked ? '1' : '0';
+    const varCounter = document.getElementById('var-counter-cb')?.checked ? '1' : '0';
+    const constantIndexes = document.getElementById('constant-indexes-cb')?.checked ? '1' : '0';
+    const skipScmHeader = document.getElementById('skip-scm-header-cb')?.checked ? '1' : '0';
+    const skipExtraInfo = document.getElementById('skip-extra-info-cb')?.checked ? '1' : '0';
+    const sb3Compat = document.getElementById('sb3-compat-cb')?.checked ? '1' : '0';
+    
+    const debugBits = `${codeOffsets}${ignoreUnknown}${varCounter}${constantIndexes}${skipScmHeader}${skipExtraInfo}${sb3Compat}`;
+    const customFlags = document.getElementById('custom-flags-input').value;
+
     logLine(`Reading file <span class="text-amber">${escapeHtml(file.name)}</span> for decompilation…`, 'info');
 
     const reader = new FileReader();
@@ -380,7 +416,14 @@
         const response = await fetch(`${API_BASE}/api/decompile`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fileBase64: base64Data, game: selectedGame }),
+          body: JSON.stringify({ 
+            fileBase64: base64Data, 
+            filename: file.name,
+            game: selectedGame,
+            useSource,
+            debugBits,
+            customFlags
+          }),
         });
 
         const data = await response.json();
@@ -409,34 +452,26 @@
     reader.readAsDataURL(file);
   });
 
-  // REALTIME GUI CLEO LINTER ENGINE (With Class Syntax Support)
   function validateCleoSyntax(code) {
     if (!editor || !window.monaco) return [];
     const model = editor.getModel();
     if (!model) return [];
-
     const lines = code.split('\n');
     const markers = [];
     const definedLabels = new Set();
     const referencedLabels = [];
 
-    // Pass 1: Collect & check duplicate labels
     lines.forEach((lineText, idx) => {
       const lineNum = idx + 1;
       const clean = lineText.replace(/\/\/.*$/, '').trim();
       if (!clean) return;
-
       const labelMatch = clean.match(/^:([A-Za-z0-9_]+)/);
       if (labelMatch) {
         const lbl = labelMatch[1].toUpperCase();
         if (definedLabels.has(lbl)) {
           markers.push({
-            startLineNumber: lineNum,
-            startColumn: 1,
-            endLineNumber: lineNum,
-            endColumn: model.getLineMaxColumn(lineNum),
-            message: `Symbol '${labelMatch[1]}' is already defined.`,
-            severity: monaco.MarkerSeverity.Error
+            startLineNumber: lineNum, startColumn: 1, endLineNumber: lineNum, endColumn: model.getLineMaxColumn(lineNum),
+            message: `Symbol '${labelMatch[1]}' is already defined.`, severity: monaco.MarkerSeverity.Error
           });
         } else {
           definedLabels.add(lbl);
@@ -444,90 +479,21 @@
       }
     });
 
-    // Pass 2: Parameter, Opcode, & Class syntax checks
     lines.forEach((lineText, idx) => {
       const lineNum = idx + 1;
       const clean = lineText.replace(/\/\/.*$/, '').trim();
       if (!clean || clean.startsWith('{$')) return;
-
-      // Check Label references
       const refMatches = clean.matchAll(/(?:jump|jf|gosub)\s+@([A-Za-z0-9_]+)/gi);
       for (const m of refMatches) {
         referencedLabels.push({ name: m[1].toUpperCase(), originalName: m[1], line: lineNum });
       }
-
-      // Check empty Class Method calls like "Car.Create()" or "Actor.SetHealth()"
-      const classEmptyMatch = clean.match(/([A-Z_][A-Z0-9_]*)\.([A-Z_][A-Z0-9_]*)\(\s*\)/i);
-      if (classEmptyMatch) {
-        markers.push({
-          startLineNumber: lineNum,
-          startColumn: 1,
-          endLineNumber: lineNum,
-          endColumn: model.getLineMaxColumn(lineNum),
-          message: `Class method '${classEmptyMatch[1]}.${classEmptyMatch[2]}' appears to be missing parameters.`,
-          severity: monaco.MarkerSeverity.Warning
-        });
-      }
-
-      // Check 'wait' opcode missing parameter (ignoring Class.Wait syntax)
-      if (!clean.includes('.') && /\b(?:0001:\s*)?wait\s*$/i.test(clean)) {
-        markers.push({
-          startLineNumber: lineNum,
-          startColumn: 1,
-          endLineNumber: lineNum,
-          endColumn: model.getLineMaxColumn(lineNum),
-          message: "Opcode 'wait' expects 1 numeric parameter (e.g., wait 0 or wait 250).",
-          severity: monaco.MarkerSeverity.Error
-        });
-      }
-
-      // Check 'player defined' missing actor/player variable
-      if (/\b0256:\s*player\s*defined\b/i.test(clean) || /\b0256:\s*player\s*$/i.test(clean)) {
-        markers.push({
-          startLineNumber: lineNum,
-          startColumn: 1,
-          endLineNumber: lineNum,
-          endColumn: model.getLineMaxColumn(lineNum),
-          message: "Opcode '0256: player defined' expects a player variable (e.g., 0256: player $PLAYER_CHAR defined).",
-          severity: monaco.MarkerSeverity.Error
-        });
-      }
-
-      // Check 'name_thread' missing string
-      if (/\b(?:03A4:\s*)?name_thread\s*$/i.test(clean)) {
-        markers.push({
-          startLineNumber: lineNum,
-          startColumn: 1,
-          endLineNumber: lineNum,
-          endColumn: model.getLineMaxColumn(lineNum),
-          message: "Opcode 'name_thread' expects a thread name string in quotes (e.g., name_thread 'MAIN').",
-          severity: monaco.MarkerSeverity.Error
-        });
-      }
-
-      // Check 'load_model' / 'request_model' missing model ID
-      if (/\b(?:0247:\s*)?(?:load_model|request_model)\s*$/i.test(clean)) {
-        markers.push({
-          startLineNumber: lineNum,
-          startColumn: 1,
-          endLineNumber: lineNum,
-          endColumn: model.getLineMaxColumn(lineNum),
-          message: "Opcode 'load_model' expects a model ID parameter (e.g., load_model 411).",
-          severity: monaco.MarkerSeverity.Error
-        });
-      }
     });
 
-    // Pass 3: Validate undefined label references
     referencedLabels.forEach(ref => {
       if (!definedLabels.has(ref.name)) {
         markers.push({
-          startLineNumber: ref.line,
-          startColumn: 1,
-          endLineNumber: ref.line,
-          endColumn: model.getLineMaxColumn(ref.line),
-          message: `Label '@${ref.originalName}' is not defined in script.`,
-          severity: monaco.MarkerSeverity.Error
+          startLineNumber: ref.line, startColumn: 1, endLineNumber: ref.line, endColumn: model.getLineMaxColumn(ref.line),
+          message: `Label '@${ref.originalName}' is not defined in script.`, severity: monaco.MarkerSeverity.Error
         });
       }
     });
@@ -535,7 +501,6 @@
     return markers;
   }
 
-  // MONACO EDITOR & ERROR HIGHLIGHT SETUP
   require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.49.0/min/vs' } });
 
   let editor;
@@ -557,12 +522,8 @@
       const safeLine = Math.max(1, Math.min(Math.floor(lineNum), maxLines));
 
       monaco.editor.setModelMarkers(model, 'cleo-compiler', [{
-        startLineNumber: safeLine,
-        startColumn: 1,
-        endLineNumber: safeLine,
-        endColumn: model.getLineMaxColumn(safeLine),
-        message: message,
-        severity: monaco.MarkerSeverity.Error
+        startLineNumber: safeLine, startColumn: 1, endLineNumber: safeLine, endColumn: model.getLineMaxColumn(safeLine),
+        message: message, severity: monaco.MarkerSeverity.Error
       }]);
 
       errorDecorations = editor.deltaDecorations(errorDecorations, [
@@ -571,7 +532,6 @@
           options: { isWholeLine: true, className: 'error-line-highlight' }
         }
       ]);
-
       editor.revealLineInCenter(safeLine);
       editor.setPosition({ lineNumber: safeLine, column: 1 });
     }
@@ -579,7 +539,6 @@
 
   require(['vs/editor/editor.main'], function () {
     monaco.languages.register({ id: 'cleo' });
-
     monaco.languages.setMonarchTokensProvider('cleo', {
       ignoreCase: true,
       tokenizer: {
@@ -610,8 +569,6 @@
         { token: 'label', foreground: '57b06b', fontStyle: 'bold' },
         { token: 'label.ref', foreground: '57b06b' },
         { token: 'number', foreground: 'c9a876' },
-        { token: 'number.hex', foreground: 'c9a876' },
-        { token: 'number.float', foreground: 'c9a876' },
         { token: 'string', foreground: 'd68a6d' },
         { token: 'variable', foreground: 'e0b3e6' },
         { token: 'annotation', foreground: '8a6528', fontStyle: 'bold' },
@@ -644,18 +601,11 @@
       clearTimeout(lintTimeout);
       lintTimeout = setTimeout(() => {
         const markers = validateCleoSyntax(editor.getValue());
-        const model = editor.getModel();
-        monaco.editor.setModelMarkers(model, 'cleo-gui-linter', markers);
+        monaco.editor.setModelMarkers(editor.getModel(), 'cleo-gui-linter', markers);
       }, 300);
     });
-
-    setTimeout(() => {
-      const markers = validateCleoSyntax(editor.getValue());
-      monaco.editor.setModelMarkers(editor.getModel(), 'cleo-gui-linter', markers);
-    }, 500);
   });
 
-  // TEMPLATES SELECTION
   document.getElementById('templateSelect').addEventListener('change', (e) => {
     const val = e.target.value;
     if (TEMPLATES[val] && editor) {
@@ -666,7 +616,7 @@
     }
   });
 
-  // COMPILE / DOWNLOAD
+  // COMPILE SCRIPT (Detects extension from editor filename or game select)
   const compileBtn = document.getElementById('compile-btn');
   const compileBtnText = document.getElementById('compile-btn-text');
   const compileSpinner = document.getElementById('compile-spinner');
@@ -681,6 +631,7 @@
     if (!editor) return;
     const code = editor.getValue();
     const selectedGame = document.getElementById('gameSelect').value;
+    const currentFilename = fileNameDisplay.textContent.trim();
     const caseSensitive = document.getElementById('case-sensitive-cb').checked;
     const checkConditions = document.getElementById('check-conditions-cb').checked;
     const noSplash = document.getElementById('no-splash-cb').checked;
@@ -709,6 +660,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           code, 
+          filename: currentFilename,
           game: selectedGame, 
           caseSensitive, 
           checkConditions,
@@ -723,15 +675,12 @@
 
       if (!response.ok || contentType.includes('application/json')) {
         const data = await response.json().catch(() => ({}));
-        
         const cmdToLog = data.cmd || cmdHeader;
         if (cmdToLog) {
           logLine(`Command: <span class="text-amber">${escapeHtml(cmdToLog)}</span>`, 'warn');
         }
-
         const message = data.error || `Compilation failed (HTTP ${response.status}).`;
         logLine(escapeHtml(message), 'error');
-
         if (data.line && typeof data.line === 'number') {
           setEditorErrorMarker(data.line, message);
         }
@@ -742,14 +691,8 @@
         logLine(`Command: <span class="text-amber">${escapeHtml(cmdHeader)}</span>`, 'warn');
       }
 
-      let ext = '.cs';
-      if (selectedGame.includes('_csi')) {
-        ext = '.csi';
-      } else if (selectedGame.includes('mobile') || selectedGame.includes('_csa')) {
-        ext = '.csa';
-      }
-
-      const filename = `script${ext}`;
+      // Dynamic download filename extraction from backend headers or filename
+      let filename = response.headers.get('x-download-filename') || currentFilename.replace(/\.txt$/i, '.cs');
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
