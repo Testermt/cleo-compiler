@@ -103,25 +103,34 @@ document.addEventListener('focusin', function(e) {
           <h1 class="font-display font-semibold text-gray-100 text-xs sm:text-sm tracking-tight truncate">
             GTA SA <span class="text-amber">CLEO</span> Compiler
           </h1>
-          <p class="text-[9px] text-gray-500 hex-addr truncate">sanny.exe backend</p>
+          <p class="text-[9px] text-gray-500 hex-addr truncate">sanny.exe</p>
         </div>
       </div>
 
       <div class="flex items-center gap-1.5 shrink-0">
-        <span id="server-status" class="hidden md:flex items-center gap-1.5 text-[11px] text-gray-500 border border-hairline rounded-sm px-2 py-1">
-          <span id="server-dot" class="w-1.5 h-1.5 rounded-full bg-gray-600"></span>
-          <span id="server-status-text">checking&hellip;</span>
-        </span>
+        <!-- COMMUNITY BUTTON -->
+        <a href="community.html" class="btn-press w-8 h-8 rounded-sm border border-teal/50 bg-teal/10 text-teal hover:bg-teal/20 transition-colors flex items-center justify-center text-sm font-bold text-decoration-none" title="Community Hub">
+          🌐
+        </a>
+
+        <!-- PUBLISH BUTTON -->
+        <button id="header-publish-btn" class="btn-press w-8 h-8 rounded-sm border border-amber/50 bg-amber/10 text-amber hover:bg-amber/20 transition-colors flex items-center justify-center text-sm" title="Publish Script">
+          🚀
+        </button>
+<!-- Baki buttons ke sath Docs ka button add karein -->
+<a href="documentation.html" class="btn-style">📖 Docs</a>
+
+        <!-- OPCODES BUTTON -->
         <button id="opcode-btn"
-          class="btn-press text-[11px] px-2.5 py-1 rounded-sm border border-hairline text-gray-300 hover:text-amber hover:border-amber/50 transition-colors">
+          class="btn-press text-[11px] px-3 py-1.5 rounded-sm border border-hairline text-gray-300 hover:text-amber hover:border-amber/50 transition-colors">
           Opcodes
         </button>
 
         <!-- GITHUB SYNC BUTTON -->
         <div class="relative">
           <button id="gh-config-btn"
-            class="btn-press text-[11px] px-2.5 py-1 rounded-sm border border-hairline bg-panel2 text-gray-200 hover:border-amber/50 transition-colors flex items-center gap-1">
-            <svg class="w-3 h-3 fill-current shrink-0" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            class="btn-press text-[11px] px-3 py-1.5 rounded-sm border border-hairline bg-panel2 text-gray-200 hover:border-amber/50 transition-colors flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 fill-current shrink-0" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
             <span id="gh-btn-text">GitHub</span>
           </button>
           
@@ -135,6 +144,10 @@ document.addEventListener('focusin', function(e) {
             </button>
             <button id="gh-save-compiled" class="w-full text-left px-3 py-2 text-gray-300 hover:bg-panel2 hover:text-amber transition-colors">
               ☁️ Save Compiled (.cs)
+            </button>
+            <div class="border-t border-hairline my-1"></div>
+            <button id="gh-publish-gist" class="w-full text-left px-3 py-2 text-teal hover:bg-panel2 transition-colors font-bold">
+              🚀 Publish to Community
             </button>
             <div class="border-t border-hairline my-1"></div>
             <button id="gh-settings-open" class="w-full text-left px-3 py-2 text-amber hover:bg-panel2 transition-colors">
@@ -189,9 +202,65 @@ document.addEventListener('focusin', function(e) {
       </div>
       
       <div class="flex justify-end gap-2 pt-2 border-t border-hairline">
-        <button id="gh-modal-close-btn" class="px-3 py-1.5 text-gray-400 hover:text-gray-100 text-[11px]">Cancel</button>
+        <button id="gh-modal-close-btn" class="px-3 py-1.5 text-gray-400 text-[11px]">Cancel</button>
         <button id="gh-save-config" class="btn-press text-[11px] px-3.5 py-1.5 bg-amber text-ink font-semibold rounded-sm hover:bg-amber/90">
           Save &amp; Sync
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PUBLISH SCRIPT MODAL -->
+  <div id="publish-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+    <div class="bg-panel border border-hairline rounded-sm max-w-md w-full p-4 sm:p-5 flex flex-col gap-3.5 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-hairline pb-2.5">
+        <h2 class="font-display text-xs sm:text-sm text-amber font-semibold">Publish Script to Community</h2>
+        <button id="publish-modal-close" class="text-gray-500 hover:text-gray-200 text-lg leading-none">&times;</button>
+      </div>
+
+      <div class="flex flex-col gap-2.5 text-[11.5px]">
+        <div>
+          <label class="block text-gray-400 mb-1">Script Title / Description:</label>
+          <input type="text" id="pub-title-input" placeholder="e.g. Awesome Car Spawner Script" 
+            class="bg-panel2 text-gray-200 border border-hairline rounded-sm px-2.5 py-2 w-full focus:outline-none focus:border-amber font-mono text-xs" />
+        </div>
+        <div>
+          <label class="block text-gray-400 mb-1">Source File Name (.txt):</label>
+          <div class="flex gap-2">
+            <input type="text" id="pub-source-name" value="script.txt" 
+              class="bg-panel2 text-gray-200 border border-hairline rounded-sm px-2.5 py-2 flex-1 focus:outline-none focus:border-amber font-mono text-xs" />
+            <input type="file" id="pub-source-file-input" accept=".txt" class="hidden" />
+            <button type="button" id="pub-browse-source" class="btn-press px-3 py-2 bg-panel2 border border-hairline text-amber text-[11.5px] rounded-sm hover:border-amber shrink-0">Browse...</button>
+          </div>
+          <span id="pub-source-status" class="text-[10px] text-gray-500 mt-0.5 block">Using editor code (or browse to replace)</span>
+        </div>
+        <div>
+          <label class="block text-gray-400 mb-1">Compiled Script File (Optional - .cs / .csa / .csi):</label>
+          <div class="flex gap-2">
+            <input type="text" id="pub-compiled-name" placeholder="script.cs" 
+              class="bg-panel2 text-gray-200 border border-hairline rounded-sm px-2.5 py-2 flex-1 focus:outline-none focus:border-amber font-mono text-xs" />
+            <input type="file" id="pub-compiled-file-input" accept=".cs,.csa,.csi" class="hidden" />
+            <button type="button" id="pub-browse-compiled" class="btn-press px-3 py-2 bg-panel2 border border-hairline text-amber text-[11px] rounded-sm hover:border-amber">Browse...</button>
+          </div>
+          <span id="pub-compiled-status" class="text-[10px] text-gray-500 mt-0.5 block">No compiled file attached</span>
+        </div>
+        <!-- ✨ SCREENSHOT PREVIEW UPLOAD FIELD -->
+        <div>
+          <label class="block text-gray-400 mb-1">Mod Screenshot (Optional - PNG/JPG):</label>
+          <div class="flex gap-2">
+            <input type="text" id="pub-screenshot-name" placeholder="screenshot.png" readonly 
+              class="bg-panel2 text-gray-200 border border-hairline rounded-sm px-2.5 py-2 flex-1 focus:outline-none font-mono text-xs" />
+            <input type="file" id="pub-screenshot-file-input" accept="image/*" class="hidden" />
+            <button type="button" id="pub-browse-screenshot" class="btn-press px-3 py-2 bg-panel2 border border-hairline text-amber text-[11px] rounded-sm hover:border-amber">Browse...</button>
+          </div>
+          <span id="pub-screenshot-status" class="text-[10px] text-gray-500 mt-0.5 block">No screenshot attached</span>
+        </div>
+      </div>
+      
+      <div class="flex justify-end gap-2 pt-2 border-t border-hairline">
+        <button id="pub-modal-cancel" class="px-3 py-1.5 text-gray-400 text-[11px]">Cancel</button>
+        <button id="pub-modal-submit" class="btn-press text-[11px] px-3.5 py-1.5 bg-amber text-ink font-semibold rounded-sm hover:bg-amber/90">
+          Publish Now 🚀
         </button>
       </div>
     </div>
@@ -234,48 +303,55 @@ document.addEventListener('focusin', function(e) {
         </div>
       </div>
 
-      <div class="grid grid-cols-2 sm:flex flex-wrap items-center gap-1.5">
-        <button id="db-upload-btn" class="btn-press text-[11.5px] px-2.5 py-1.5 rounded-sm border border-hairline text-gray-300 hover:text-amber transition-colors text-center">Custom .db</button>
-        <button id="decompile-btn" class="btn-press text-[11.5px] px-2.5 py-1.5 rounded-sm border border-hairline text-gray-300 hover:text-amber transition-colors text-center">Decompile File</button>
-        <button id="upload-btn" class="btn-press text-[11.5px] px-2.5 py-1.5 rounded-sm border border-hairline text-gray-300 hover:text-amber transition-colors text-center">Upload Script</button>
-        <button id="clear-btn" class="btn-press text-[11.5px] px-2.5 py-1.5 rounded-sm border border-hairline text-gray-400 hover:text-gray-100 transition-colors text-center">Clear</button>
-        <button id="compile-btn" class="btn-press text-[11.5px] px-3.5 py-1.5 rounded-sm bg-amber text-ink font-semibold hover:bg-amber/90 transition-colors flex items-center justify-center gap-1.5 col-span-2 disabled:opacity-50">
-          <svg id="compile-spinner" class="hidden animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-          </svg>
-          <span id="compile-btn-text">Compile &amp; Download</span>
-        </button>
+      <div class="flex flex-wrap items-center gap-1.5">
+        <button id="db-upload-btn" class="btn-press text-[11.5px] px-2.5 py-1.5 rounded-sm border border-hairline text-gray-300 hover:text-amber transition-colors">Custom .db</button>
+        <button id="decompile-btn" class="btn-press text-[11.5px] px-2.5 py-1.5 rounded-sm border border-hairline text-gray-300 hover:text-amber transition-colors">Decompile</button>
+        <button id="upload-btn" class="btn-press text-[11.5px] px-2.5 py-1.5 rounded-sm border border-hairline text-gray-300 hover:text-amber transition-colors">Upload</button>
+        <button id="clear-btn" class="btn-press text-[11.5px] px-2.5 py-1.5 rounded-sm border border-hairline text-gray-400 hover:text-gray-100 transition-colors">Clear</button>
       </div>
+    </div>
+
+    <!-- Compile & Download Button Row -->
+    <div>
+      <button id="compile-btn" class="btn-press text-xs sm:text-sm py-2.5 px-4 rounded-sm bg-amber text-ink font-bold transition-colors flex items-center justify-center gap-2 w-full disabled:opacity-50 shadow-md">
+        <svg id="compile-spinner" class="hidden animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        <span id="compile-btn-text">Compile &amp; Download</span>
+      </button>
     </div>
 
     <!-- Advanced CLI Flags Bar -->
-    <div class="bg-panel2/60 border border-hairline rounded-sm px-3.5 py-3 flex flex-col gap-2.5 text-[11.5px]">
-      <div class="flex flex-wrap items-center gap-4 text-gray-400">
-        <span class="text-amber font-display font-semibold hex-addr">COMPILE FLAGS:</span>
-        <label class="flex items-center gap-1.5 cursor-pointer hover:text-amber transition-colors"><input type="checkbox" id="check-conditions-cb" class="accent-amber rounded-sm" checked><span>--check-conditions</span></label>
-        <label class="flex items-center gap-1.5 cursor-pointer hover:text-amber transition-colors"><input type="checkbox" id="no-splash-cb" class="accent-amber rounded-sm" checked><span>--no-splash</span></label>
-        <label class="flex items-center gap-1.5 cursor-pointer hover:text-amber transition-colors"><input type="checkbox" id="case-sensitive-cb" class="accent-amber rounded-sm"><span>--case-sensitive</span></label>
-      </div>
+    <details class="bg-panel2/60 border border-hairline rounded-sm px-3.5 py-2.5 text-[11.5px]">
+      <summary class="cursor-pointer text-amber font-semibold select-none flex items-center gap-2">⚙️ Advanced Compiler &amp; Decompiler Flags</summary>
+      <div class="pt-3 flex flex-col gap-2.5 border-t border-hairline/60 mt-2 text-gray-400">
+        <div class="flex flex-wrap items-center gap-4">
+          <span class="text-amber font-bold">Compile:</span>
+          <label class="flex items-center gap-1.5 cursor-pointer hover:text-amber"><input type="checkbox" id="check-conditions-cb" class="accent-amber rounded-sm" checked><span>--check-conditions</span></label>
+          <label class="flex items-center gap-1.5 cursor-pointer hover:text-amber"><input type="checkbox" id="no-splash-cb" class="accent-amber rounded-sm" checked><span>--no-splash</span></label>
+          <label class="flex items-center gap-1.5 cursor-pointer hover:text-amber"><input type="checkbox" id="case-sensitive-cb" class="accent-amber rounded-sm"><span>--case-sensitive</span></label>
+        </div>
 
-      <div class="flex flex-wrap items-center gap-3 text-gray-400 border-t border-hairline/60 pt-2">
-        <span class="text-teal font-display font-semibold hex-addr">DECOMPILE FLAGS:</span>
-        <label class="flex items-center gap-1 cursor-pointer hover:text-teal transition-colors"><input type="checkbox" id="use-source-cb" class="accent-teal rounded-sm" checked><span>--use-source</span></label>
-        <label class="flex items-center gap-1 cursor-pointer hover:text-teal transition-colors"><input type="checkbox" id="code-offsets-cb" class="accent-teal rounded-sm"><span>CODE_OFFSETS</span></label>
-        <label class="flex items-center gap-1 cursor-pointer hover:text-teal transition-colors"><input type="checkbox" id="ignore-unknown-cb" class="accent-teal rounded-sm"><span>IGNORE_UNKNOWN</span></label>
-        <label class="flex items-center gap-1 cursor-pointer hover:text-teal transition-colors"><input type="checkbox" id="var-counter-cb" class="accent-teal rounded-sm"><span>VAR_COUNTER</span></label>
-        <label class="flex items-center gap-1 cursor-pointer hover:text-teal transition-colors"><input type="checkbox" id="constant-indexes-cb" class="accent-teal rounded-sm"><span>CONSTANT_INDEXES</span></label>
-        <label class="flex items-center gap-1 cursor-pointer hover:text-teal transition-colors"><input type="checkbox" id="skip-scm-header-cb" class="accent-teal rounded-sm"><span>SKIP_SCM_HEADER</span></label>
-        <label class="flex items-center gap-1 cursor-pointer hover:text-teal transition-colors"><input type="checkbox" id="skip-extra-info-cb" class="accent-teal rounded-sm"><span>SKIP_EXTRA_INFO</span></label>
-        <label class="flex items-center gap-1 cursor-pointer hover:text-teal transition-colors"><input type="checkbox" id="sb3-compat-cb" class="accent-teal rounded-sm" checked><span>SB3_COMPAT</span></label>
-      </div>
+        <div class="flex flex-wrap items-center gap-3 pt-1 border-t border-hairline/60">
+          <span class="text-teal font-bold">Decompile:</span>
+          <label class="flex items-center gap-1 cursor-pointer hover:text-teal"><input type="checkbox" id="use-source-cb" class="accent-teal rounded-sm" checked><span>--use-source</span></label>
+          <label class="flex items-center gap-1 cursor-pointer hover:text-teal"><input type="checkbox" id="code-offsets-cb" class="accent-teal rounded-sm"><span>CODE_OFFSETS</span></label>
+          <label class="flex items-center gap-1 cursor-pointer hover:text-teal"><input type="checkbox" id="ignore-unknown-cb" class="accent-teal rounded-sm"><span>IGNORE_UNKNOWN</span></label>
+          <label class="flex items-center gap-1 cursor-pointer hover:text-teal"><input type="checkbox" id="var-counter-cb" class="accent-teal rounded-sm"><span>VAR_COUNTER</span></label>
+          <label class="flex items-center gap-1 cursor-pointer hover:text-teal"><input type="checkbox" id="constant-indexes-cb" class="accent-teal rounded-sm"><span>CONSTANT_INDEXES</span></label>
+          <label class="flex items-center gap-1 cursor-pointer hover:text-teal"><input type="checkbox" id="skip-scm-header-cb" class="accent-teal rounded-sm"><span>SKIP_SCM_HEADER</span></label>
+          <label class="flex items-center gap-1 cursor-pointer hover:text-teal"><input type="checkbox" id="skip-extra-info-cb" class="accent-teal rounded-sm"><span>SKIP_EXTRA_INFO</span></label>
+          <label class="flex items-center gap-1 cursor-pointer hover:text-teal"><input type="checkbox" id="sb3-compat-cb" class="accent-teal rounded-sm" checked><span>SB3_COMPAT</span></label>
+        </div>
 
-      <div class="flex items-center gap-2 w-full pt-1 border-t border-hairline/60">
-        <label for="custom-flags-input" class="hex-addr text-gray-500 whitespace-nowrap">EXTRA FLAGS:</label>
-        <input type="text" id="custom-flags-input" placeholder="e.g. --constant MODE=1" 
-          class="bg-panel text-gray-200 border border-hairline rounded-sm px-2 py-0.5 text-[11px] w-full focus:outline-none focus:border-amber font-mono" />
+        <div class="flex items-center gap-2 w-full pt-1 border-t border-hairline/60">
+          <label for="custom-flags-input" class="hex-addr text-gray-500 whitespace-nowrap">EXTRA FLAGS:</label>
+          <input type="text" id="custom-flags-input" placeholder="e.g. --constant MODE=1" 
+            class="bg-panel text-gray-200 border border-hairline rounded-sm px-2 py-0.5 text-[11px] w-full focus:outline-none focus:border-amber font-mono" />
+        </div>
       </div>
-    </div>
+    </details>
 
     <!-- Editor Wrapper with File Tabs & Vertical 3-Dot Menu -->
     <div id="editor-wrapper-box" class="rounded-sm border border-hairline overflow-hidden shadow-2xl shadow-black/40 flex flex-col bg-panel">
@@ -335,12 +411,35 @@ document.addEventListener('focusin', function(e) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.49.0/min/vs/loader.min.js"></script>
 <script>
   const API_BASE = window.CLEO_API_BASE || 'https://cleo-compiler-backend.onrender.com';
+  
+  const REGISTRY_GIST_ID = "42183afd8d5722544524b1fc6f68ec3a";
 
   let openTabs = [
     { id: 'tab-1', name: 'script.txt', content: `{$CLEO .cs}\n\n0000: NOP\n03A4: name_thread 'MAIN'\n\n:MAIN_START\nwait 0\nif\n  0256:   player $PLAYER_CHAR defined\njf @MAIN_START\n\n0001: wait 0\n0417: create_pickup_marker_at 0.0 0.0 0.0 color 1\n\n:MAIN_LOOP\nwait 250\njump @MAIN_LOOP\n` }
   ];
   let activeTabId = 'tab-1';
   let editor;
+
+  window.addEventListener('DOMContentLoaded', async () => {
+    const params = new URLSearchParams(window.location.search);
+    const gistId = params.get('load_gist');
+    const filename = params.get('file');
+    if (gistId) {
+      try {
+        const res = await fetch(`https://api.github.com/gists/${gistId}`);
+        if (res.ok) {
+          const data = await res.json();
+          const file = data.files[filename] || Object.values(data.files)[0];
+          if (file && editor) {
+            editor.setValue(file.content);
+            openTabs[0].name = filename || 'community_script.txt';
+            renderTabs();
+            logLine('Community script loaded successfully into editor!', 'success');
+          }
+        }
+      } catch(e) { logLine('Failed to load community script.', 'error'); }
+    }
+  });
 
   const tabsContainer = document.getElementById('file-tabs-container');
 
@@ -384,7 +483,6 @@ document.addEventListener('focusin', function(e) {
     }
   }
 
-  // --- EDITOR 3-DOT MENU LOGIC ---
   const editorMenuBtn = document.getElementById('editor-menu-btn');
   const editorDropdown = document.getElementById('editor-dropdown');
   const editorBox = document.getElementById('editor-wrapper-box');
@@ -434,6 +532,251 @@ document.addEventListener('focusin', function(e) {
     }
     if (editor) editor.layout();
   });
+
+  // --- PUBLISH SCRIPT MODAL & EVENT LISTENERS ---
+  const publishModal = document.getElementById('publish-modal');
+  const pubTitleInput = document.getElementById('pub-title-input');
+  
+  const pubSourceName = document.getElementById('pub-source-name');
+  const pubSourceFileInput = document.getElementById('pub-source-file-input');
+  const pubBrowseSource = document.getElementById('pub-browse-source');
+  const pubSourceStatus = document.getElementById('pub-source-status');
+
+  const pubCompiledName = document.getElementById('pub-compiled-name');
+  const pubCompiledFileInput = document.getElementById('pub-compiled-file-input');
+  const pubBrowseCompiled = document.getElementById('pub-browse-compiled');
+  const pubCompiledStatus = document.getElementById('pub-compiled-status');
+
+  // ✨ Screenshot Upload Elements
+  const pubScreenshotName = document.getElementById('pub-screenshot-name');
+  const pubScreenshotFileInput = document.getElementById('pub-screenshot-file-input');
+  const pubBrowseScreenshot = document.getElementById('pub-browse-screenshot');
+  const pubScreenshotStatus = document.getElementById('pub-screenshot-status');
+
+  const pubModalSubmit = document.getElementById('pub-modal-submit');
+  const pubModalCancel = document.getElementById('pub-modal-cancel');
+  const publishModalClose = document.getElementById('publish-modal-close');
+
+  let attachedSourceCustomContent = null;
+  let attachedCompiledContent = null;
+  let attachedCompiledBase64 = false;
+
+  let attachedScreenshotContent = null;
+  let attachedScreenshotBase64 = false;
+
+  pubBrowseSource.addEventListener('click', () => pubSourceFileInput.click());
+  pubSourceFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    pubSourceName.value = file.name;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      attachedSourceCustomContent = event.target.result;
+      pubSourceStatus.textContent = `Attached file: ${file.name} (${Math.round(file.size/1024)} KB)`;
+      pubSourceStatus.className = 'text-[10px] text-good mt-0.5 block';
+    };
+    reader.readAsText(file);
+  });
+
+  pubBrowseCompiled.addEventListener('click', () => pubCompiledFileInput.click());
+  pubCompiledFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    pubCompiledName.value = file.name;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      attachedCompiledContent = event.target.result.split(',')[1] || event.target.result;
+      attachedCompiledBase64 = true;
+      pubCompiledStatus.textContent = `Attached: ${file.name} (${Math.round(file.size/1024)} KB)`;
+      pubCompiledStatus.className = 'text-[10px] text-good mt-0.5 block';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // ✨ Screenshot Browse Logic
+  pubBrowseScreenshot.addEventListener('click', () => pubScreenshotFileInput.click());
+  pubScreenshotFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    pubScreenshotName.value = file.name;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      attachedScreenshotContent = event.target.result.split(',')[1] || event.target.result;
+      attachedScreenshotBase64 = true;
+      pubScreenshotStatus.textContent = `Attached: ${file.name} (${Math.round(file.size/1024)} KB)`;
+      pubScreenshotStatus.className = 'text-[10px] text-good mt-0.5 block';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('header-publish-btn').addEventListener('click', openPublishModal);
+  document.getElementById('gh-publish-gist').addEventListener('click', () => {
+    ghDropdown.classList.add('hidden');
+    openPublishModal();
+  });
+
+  function openPublishModal() {
+    const token = localStorage.getItem('gh_token');
+    if (!token) {
+      ghModal.classList.remove('hidden');
+      alert('Please configure your GitHub Token first! Ensure it has "gist" scope permissions.');
+      return;
+    }
+    const activeTab = openTabs.find(t => t.id === activeTabId);
+    pubSourceName.value = activeTab ? activeTab.name : 'script.txt';
+    pubTitleInput.value = '';
+    
+    attachedSourceCustomContent = null;
+    pubSourceStatus.textContent = 'Using editor code (or browse to replace)';
+    pubSourceStatus.className = 'text-[10px] text-gray-500 mt-0.5 block';
+
+    attachedCompiledContent = null;
+    attachedCompiledBase64 = false;
+    pubCompiledName.value = '';
+    pubCompiledStatus.textContent = 'No compiled file attached';
+    pubCompiledStatus.className = 'text-[10px] text-gray-500 mt-0.5 block';
+
+    attachedScreenshotContent = null;
+    attachedScreenshotBase64 = false;
+    pubScreenshotName.value = '';
+    pubScreenshotStatus.textContent = 'No screenshot attached';
+    pubScreenshotStatus.className = 'text-[10px] text-gray-500 mt-0.5 block';
+    
+    publishModal.classList.remove('hidden');
+  }
+
+  publishModalClose.addEventListener('click', () => publishModal.classList.add('hidden'));
+  pubModalCancel.addEventListener('click', () => publishModal.classList.add('hidden'));
+
+  async function registerUserToHub(username) {
+    if (!username) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/register-user`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username })
+      });
+      await res.json();
+    } catch(e) {
+      console.error("Registry background update failed:", e);
+    }
+  }
+
+    pubModalSubmit.addEventListener('click', async () => {
+    const token = localStorage.getItem('gh_token');
+    const title = pubTitleInput.value.trim();
+    const sourceFilename = pubSourceName.value.trim() || 'script.txt';
+    const compiledFilename = pubCompiledName.value.trim();
+    
+    // ✨ Screenshot File Input element se direct file uthayein
+    const screenshotFile = pubScreenshotFileInput.files[0];
+
+    if (!title) {
+      alert('Please enter a title or description!');
+      return;
+    }
+    
+    const sourceCode = attachedSourceCustomContent !== null ? attachedSourceCustomContent : (editor ? editor.getValue() : '');
+    if (!sourceCode.trim()) {
+      alert('Source code is empty!');
+      return;
+    }
+
+    publishModal.classList.add('hidden');
+    logLine('[Community] Publishing script and uploading screenshot...', 'info');
+
+    try {
+      const userRes = await fetch('https://api.github.com/user', {
+        headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+      });
+      if (!userRes.ok) {
+        alert('Invalid GitHub Token!');
+        return;
+      }
+      const userData = await userRes.json();
+      const username = userData.login;
+      localStorage.setItem('gh_username', username);
+
+      await registerUserToHub(username);
+
+      // ✨ 1. Agar user ne screenshot select kiya hai, toh use ImgBB API par upload karke direct URL lo
+          // ✨ ImgBB API Upload Logic with your key
+      let screenshotUrl = '';
+      if (screenshotFile) {
+        const formData = new FormData();
+        formData.append('image', screenshotFile);
+        
+        const imgRes = await fetch('https://api.imgbb.com/1/upload?key=a46429a08b55c6269177ae286e8f51c6', {
+          method: 'POST',
+          body: formData
+        });
+        const imgData = await imgRes.json();
+        if (imgData.success) {
+          screenshotUrl = imgData.data.url; // Direct image URL mil jayega!
+        }
+      }
+
+
+      const filesPayload = {
+        [sourceFilename]: { content: sourceCode },
+        'comments.json': { content: '[]' }
+      };
+
+      if (compiledFilename && attachedCompiledContent) {
+        filesPayload[compiledFilename] = { 
+          content: attachedCompiledContent,
+          encoding: attachedCompiledBase64 ? 'base64' : 'utf-8'
+        };
+      }
+
+      const finalDescription = title;
+      const res = await fetch('https://api.github.com/gists', {
+        method: 'POST',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/vnd.github.v3+json'
+        },
+        body: JSON.stringify({
+          description: finalDescription,
+          public: true,
+          files: filesPayload
+        })
+      });
+
+      if (res.ok) {
+        const gistData = await res.json();
+        
+        // ✨ 2. Backend ko publish request bhejte waqt screenshot URL pass karein (No Base64 heavy data)
+        try {
+          await fetch(`${API_BASE}/api/publish-post`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              gistId: gistData.id,
+              description: finalDescription,
+              owner: username,
+              avatar: userData.avatar_url,
+              createdAt: gistData.created_at,
+              files: Object.keys(gistData.files),
+              screenshots: screenshotUrl ? { [pubScreenshotName.value]: screenshotUrl } : {}
+            })
+          });
+        } catch(e) { console.error("Failed to sync post to central index", e); }
+
+        logLine(`Successfully published to Community Feed! ID: <span class="text-good">${gistData.id}</span>`, 'success');
+        alert('Script successfully published with image link preview!');
+      } else {
+        const errJson = await res.json();
+        logLine(`[Gist Error] ${errJson.message}`, 'error');
+        alert(`Failed to publish: ${errJson.message}`);
+      }
+    } catch (err) {
+      logLine(`[Network Error] ${err.message}`, 'error');
+      alert(`Network error: ${err.message}`);
+    }
+  });
+
 
   const ghConfigBtn = document.getElementById('gh-config-btn');
   const ghDropdown = document.getElementById('gh-dropdown');
@@ -487,6 +830,9 @@ document.addEventListener('focusin', function(e) {
       localStorage.removeItem('gh_repo');
       localStorage.removeItem('gh_branch');
       localStorage.removeItem('gh_autosave');
+      localStorage.removeItem('gh_username');
+      localStorage.removeItem('gh_avatar');
+
       ghTokenInput.value = '';
       ghRepoInput.value = '';
       ghBranchInput.value = 'main';
@@ -500,6 +846,7 @@ document.addEventListener('focusin', function(e) {
   ghModalCloseBtn.addEventListener('click', () => ghModal.classList.add('hidden'));
   window.addEventListener('click', (e) => {
     if (e.target === ghModal) ghModal.classList.add('hidden');
+    if (e.target === publishModal) publishModal.classList.add('hidden');
     ghDropdown.classList.add('hidden');
   });
 
@@ -698,7 +1045,7 @@ document.addEventListener('focusin', function(e) {
     const token = localStorage.getItem('gh_token');
     const repo = localStorage.getItem('gh_repo');
     if (!token || !repo) {
-      ghModal.classList.remove('hidden');
+      ghModal.classList.add('hidden');
       return;
     }
     compileBtn.click();
@@ -1101,15 +1448,14 @@ document.addEventListener('focusin', function(e) {
 
       logLine(`Compilation succeeded — <span class="text-good">${filename}</span> downloaded.`, 'success');
 
-      // Check GitHub auto-save logic
       const token = localStorage.getItem('gh_token');
       const repo = localStorage.getItem('gh_repo');
-      const autosave = localStorage.getItem('gh_autosave') !== 'false';
+      const autosave = localStorage.getItem('gh_autosave') === 'true'; // ✨ Fixed here
 
       if (token && repo) {
         let shouldSave = autosave;
         if (!autosave) {
-          shouldSave = confirm("Save output to GitHub?");
+          shouldSave = confirm("Auto-save is off. Do you want to save this compiled output to GitHub?");
         }
         if (shouldSave) {
           const reader = new FileReader();

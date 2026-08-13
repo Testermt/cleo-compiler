@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation & User Manual - GTA SA CLEO Compiler</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-color: #38bdf8;
+            --border-color: #334155;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+        h1, h2, h3 {
+            color: var(--text-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        h1 { font-size: 28px; color: var(--accent-color); }
+        h2 { font-size: 22px; margin-top: 30px; }
+        h3 { font-size: 18px; border: none; margin-top: 20px; }
+        p, li {
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+        ul { padding-left: 20px; }
+        li { margin-bottom: 8px; }
+        strong { color: var(--text-color); }
+        .back-btn {
+            display: inline-block;
+            background: var(--accent-color);
+            color: #0f172a;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .back-btn:hover { opacity: 0.9; }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="index.html" class="back-btn">&larr; Back to Editor</a>
+    
+    <h1>GTA SA Online CLEO Compiler & Community Hub</h1>
+    <p>Official Feature Documentation & User Manual</p>
+
+    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+
+    <h2>1. Introduction & Overview</h2>
+    <p>The <strong>GTA SA Online CLEO Compiler & Community Hub</strong> is a web-based integrated development environment (IDE) and sharing platform built specifically for Grand Theft Auto modders. It allows users to write, lint, compile, and decompile CLEO scripts (<code>.cs</code>, <code>.csa</code>, <code>.csi</code>) directly from their browser—both on PC and mobile devices—without needing heavy desktop software like Sanny Builder.</p>
+
+    <h2>2. GitHub Private Sync & Auto-Save Feature 🐙</h2>
+    <p>One of the core features of the platform is direct integration with personal GitHub repositories, ensuring that your source codes and compiled outputs are securely backed up.</p>
+    <ul>
+        <li><strong>🔑 Configuration:</strong> Users can link their GitHub account by generating a Personal Access Token (PAT) with repo scope permissions. The token and repository name are stored securely in your browser's local storage.</li>
+        <li><strong>📁 Auto-Creation:</strong> If the specified private repository does not exist on your GitHub account, the platform automatically creates it for you.</li>
+        <li><strong>💾 How Auto-Save Works:</strong> When enabled, any compiled script or source file is committed directly to your private repository in real-time. When you click <strong>Compile & Download</strong>, the backend compiles your code, triggers an automatic background commit via the GitHub Contents API, and downloads the file to your device.</li>
+    </ul>
+
+    <h2>3. Core IDE & Compiler Features</h2>
+    <h3>A. Advanced Monaco Code Editor</h3>
+    <ul>
+        <li><strong>Syntax Highlighting:</strong> Custom Monarch token provider designed for CLEO syntax.</li>
+        <li><strong>Real-Time GUI Linter:</strong> Automatically scans code for duplicate labels or missing jump references every 300ms.</li>
+        <li><strong>Multi-Tab Interface:</strong> Work on multiple script files simultaneously with ease.</li>
+    </ul>
+
+    <h3>B. Multi-Game & Platform Support</h3>
+    <p>Supports GTA San Andreas, GTA Vice City, and GTA III. Outputs include <code>.cs</code> for PC, along with <code>.csa</code> and <code>.csi</code> formats for Mobile devices.</p>
+
+    <h3>C. Quick Templates & Snippets</h3>
+    <p>Built-in template selector to instantly load common boilerplate scripts like Car Spawner, Teleport, and Godmode.</p>
+
+    <h3>D. Custom Class Database & Advanced CLI Flags</h3>
+    <p>Upload custom <code>.db</code> files to extend opcode support and toggle advanced compiler/decompiler flags directly from the UI.</p>
+
+    <h2>4. Community Hub & Social Features 🚀</h2>
+    <ul>
+        <li><strong>🌐 Public Scripts Feed:</strong> A decentralized community space where global modders can share and discover creations.</li>
+        <li><strong>📸 Instant ImgBB Screenshot Integration:</strong> Automatic image uploads via the ImgBB API to display clean preview cards for mods.</li>
+        <li><strong>📥 Download Counter:</strong> Securely track script downloads through the platform registry.</li>
+        <li><strong>💬 Discussion Threads:</strong> Interactive comments section supporting GitHub avatars and thread owner controls.</li>
+    </ul>
+
+    <h2>5. Step-by-Step User Guide</h2>
+    <h3>Step 1: Writing & Compiling Code</h3>
+    <p>Open the editor, write your script or select a template. Choose your target game/platform and click <strong>"Compile & Download"</strong>. The system will process your script and optionally auto-commit it to GitHub.</p>
+
+    <h3>Step 2: Publishing to the Community 🚀</h3>
+    <p>Click the <strong>🚀 Publish</strong> button in the header, fill in your details, attach your files and screenshot, and submit to share your work with the global modding community.</p>
+
+    <div class="footer">
+        &copy; 2026 GTA SA Online CLEO Compiler. All rights reserved.
+    </div>
+</div>
+
+</body>
+</html>
