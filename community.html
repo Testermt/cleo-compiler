@@ -18,7 +18,6 @@ document.addEventListener('focusin', function(e) {
   gtag('js', new Date());
   gtag('config', 'G-8973LHLFH8');
 </script>
-
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>GTA SA &middot; Community Script Hub</title>
@@ -37,6 +36,9 @@ document.addEventListener('focusin', function(e) {
   .gta-button { background: rgba(232, 163, 61, 0.1); border: 1px solid rgba(232, 163, 61, 0.4); color: #e8a33d; }
   .gta-button:hover { background: rgba(232, 163, 61, 0.2); border-color: #e8a33d; }
   .gta-glow { text-shadow: 0 0 8px rgba(232, 163, 61, 0.4); }
+  .channel-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.625rem; border-radius: 0.25rem; color: #9ca3af; text-decoration: none; transition: background-color 0.2s, color 0.2s; }
+  .channel-item:hover { background-color: #181d26; color: #e2e8f0; }
+  .channel-item.active { background: rgba(232, 163, 61, 0.15); border: 1px solid rgba(232, 163, 61, 0.4); color: #e8a33d; font-weight: 600; }
 </style>
 </head>
 <body class="bg-[#0c0f14] min-h-screen flex h-screen overflow-hidden">
@@ -52,8 +54,10 @@ document.addEventListener('focusin', function(e) {
 
     <div class="flex-1 overflow-y-auto p-2 space-y-1 text-xs">
       <div class="text-[10px] font-bold text-[#8a6528] uppercase tracking-wider px-2 py-1">Radio &amp; Channels</div>
-      <a href="#" class="flex items-center gap-2 px-2.5 py-2 rounded bg-[#e8a33d]/15 border border-[#e8a33d]/40 text-[#e8a33d] font-semibold"># 🌐 public-scripts</a>
-      <a href="index.html" class="flex items-center gap-2 px-2.5 py-2 rounded text-gray-400 hover:bg-[#181d26] hover:text-gray-200 transition-colors">💻 back-to-compiler</a>
+      <!-- ✨ Global Chat Channel Added with proper styling -->
+      <a href="#" onclick="openGlobalChat(event)" id="btn-global-chat" class="channel-item"># 🌐 global-chat</a>
+      <a href="#" onclick="openPublicScripts(event)" id="btn-public-scripts" class="channel-item active"># 🌐 public-scripts</a>
+      <a href="index.html" class="channel-item">💻 back-to-compiler</a>
     </div>
 
     <div class="h-14 bg-[#12161d] border-t border-[#242b36] px-3 flex items-center justify-between">
@@ -74,32 +78,44 @@ document.addEventListener('focusin', function(e) {
       <div class="flex items-center justify-between w-full md:w-auto gap-2 font-bold text-gray-200 text-xs sm:text-sm min-w-0">
         <div class="flex items-center gap-1.5 min-w-0">
           <button id="sidebar-toggle" class="md:hidden text-amber-500 hover:text-white text-base p-1">☰</button>
-          <span class="text-[#e8a33d]">#</span>
-          <span class="truncate text-gray-100 tracking-wide">public-scripts</span>
+          <span class="text-[#e8a33d]" id="header-prefix">#</span>
+          <span class="truncate text-gray-100 tracking-wide" id="header-title">public-scripts</span>
         </div>
         <!-- Mobile Action Buttons -->
-        <div class="flex items-center gap-1.5 md:hidden shrink-0">
+        <div class="flex items-center gap-1.5 md:hidden shrink-0" id="mobile-action-bar">
           <button onclick="fetchGists()" class="px-2.5 py-1 rounded gta-button text-[10px] font-semibold">🔄</button>
           <a href="index.html" class="px-2.5 py-1 rounded bg-[#e8a33d] text-black text-[10px] font-bold text-decoration-none shadow">Editor</a>
         </div>
       </div>
 
       <!-- Search Bar -->
-      <div class="w-full md:flex-1 max-w-sm px-0 md:px-2">
+      <div class="w-full md:flex-1 max-w-sm px-0 md:px-2" id="search-bar-container">
         <input type="text" id="search-username-input" placeholder="🔍 Search username or script..." 
           class="w-full bg-[#12161d] border border-[#242b36] rounded px-2.5 py-1.5 md:py-1 text-xs text-gray-200 focus:outline-none focus:border-[#e8a33d]" />
       </div>
 
       <!-- Desktop Action Buttons -->
-      <div class="hidden md:flex items-center gap-1.5 shrink-0">
+      <div class="hidden md:flex items-center gap-1.5 shrink-0" id="desktop-action-bar">
         <button id="refresh-feed" class="px-3 py-1 rounded gta-button text-[11px] sm:text-xs transition-colors font-semibold">🔄 Refresh</button>
         <a href="index.html" class="px-3 py-1 rounded bg-[#e8a33d] text-black text-[11px] sm:text-xs hover:bg-[#d49233] font-bold text-decoration-none shadow">Editor</a>
       </div>
     </header>
 
+    <!-- MAIN VIEW CONTAINER (Switches between Feed and Global Chat) -->
     <main id="community-feed-grid" class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
       <div class="text-center text-gray-500 py-12 text-xs">Loading community scripts from all users...</div>
     </main>
+
+    <!-- GLOBAL CHAT CONTAINER (Hidden by default) -->
+    <div id="global-chat-panel" class="hidden flex-1 flex flex-col min-h-0 bg-[#0c0f14] overflow-hidden">
+      <div id="chat-messages" class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
+        <div class="text-center text-gray-500 py-12 text-xs">Connecting to Global Chat...</div>
+      </div>
+      <div class="p-3 bg-[#12161d] border-t border-[#242b36] flex gap-2 shrink-0">
+        <input type="text" id="global-chat-input" placeholder="Type a global message..." class="flex-1 bg-[#181d26] border border-[#242b36] rounded px-3 py-2 text-xs text-gray-200 focus:outline-none focus:border-[#e8a33d]" />
+        <button onclick="sendGlobalChatMessage()" class="px-4 py-2 bg-[#e8a33d] text-black font-bold rounded text-xs hover:bg-[#d49233] shrink-0">Send</button>
+      </div>
+    </div>
   </div>
 
   <!-- SCRIPT DETAILS MODAL -->
@@ -166,6 +182,7 @@ document.addEventListener('focusin', function(e) {
   sidebarOverlay.addEventListener('click', toggleSidebar);
 
   const feedGrid = document.getElementById('community-feed-grid');
+  const globalChatPanel = document.getElementById('global-chat-panel');
   const refreshBtn = document.getElementById('refresh-feed');
   const detailModal = document.getElementById('script-detail-modal');
   const detailClose = document.getElementById('detail-close');
@@ -189,6 +206,7 @@ document.addEventListener('focusin', function(e) {
   let allCachedScripts = [];
   const gistsMap = {};
   let downloadCountsMap = {};
+  let chatInterval = null;
 
   refreshBtn.addEventListener('click', fetchGists);
   detailClose.addEventListener('click', () => detailModal.classList.add('hidden'));
@@ -201,6 +219,132 @@ document.addEventListener('focusin', function(e) {
     return null;
   }
 
+  // --- CHANNEL SWITCHING LOGIC ---
+  window.openPublicScripts = function(e) {
+    if (e) e.preventDefault();
+    if (chatInterval) clearInterval(chatInterval);
+    document.getElementById('btn-public-scripts').classList.add('active');
+    document.getElementById('btn-global-chat').classList.remove('active');
+    
+    feedGrid.classList.remove('hidden');
+    globalChatPanel.classList.add('hidden');
+    document.getElementById('header-title').textContent = 'public-scripts';
+    document.getElementById('search-bar-container').style.display = 'block';
+    if (window.innerWidth < 768) toggleSidebar();
+    fetchGists();
+  };
+
+  window.openGlobalChat = function(e) {
+    if (e) e.preventDefault();
+    if (chatInterval) clearInterval(chatInterval);
+    document.getElementById('btn-global-chat').classList.add('active');
+    document.getElementById('btn-public-scripts').classList.remove('active');
+
+    feedGrid.classList.add('hidden');
+    globalChatPanel.classList.remove('hidden');
+    document.getElementById('header-title').textContent = 'global-chat';
+    document.getElementById('search-bar-container').style.display = 'none';
+    if (window.innerWidth < 768) toggleSidebar();
+
+    loadGlobalChatMessages();
+    chatInterval = setInterval(loadGlobalChatMessages, 5000);
+  };
+
+  async function loadGlobalChatMessages() {
+    try {
+      const res = await fetch(`${API_BASE}/api/get-chat?t=${Date.now()}`);
+      const data = await res.json();
+      const chatBox = document.getElementById('chat-messages');
+      const currentUsername = (localStorage.getItem('gh_username') || '').trim().toLowerCase();
+
+      if (data.success && data.messages.length > 0) {
+        chatBox.innerHTML = data.messages.map((m, index) => {
+          let timeStr = '';
+          if (m.time) {
+            const d = new Date(m.time);
+            timeStr = d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          }
+
+          const msgUser = (m.user || '').trim().toLowerCase();
+          const isOwner = currentUsername && msgUser === currentUsername;
+
+          return `
+            <div class="flex items-start justify-between gap-2.5 p-2 bg-[#12161d] rounded border border-[#242b36] group">
+              <div class="flex items-start gap-2.5 min-w-0 flex-1">
+                <img src="${m.avatar}" class="w-7 h-7 rounded-full shrink-0 border border-[#e8a33d]/40" />
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-baseline justify-between">
+                    <span class="font-bold text-[#e8a33d] text-xs">${escapeHtml(m.user)}</span>
+                    <span class="text-[9px] text-gray-500">${timeStr}</span>
+                  </div>
+                  <p class="text-gray-300 text-xs break-words mt-0.5">${escapeHtml(m.body)}</p>
+                </div>
+              </div>
+              ${isOwner ? `<button onclick="deleteGlobalMessage(${index})" class="text-gray-500 hover:text-red-400 text-[10px] shrink-0 px-1 opacity-60 group-hover:opacity-100 transition-opacity" title="Delete message">🗑️</button>` : ''}
+            </div>
+          `;
+        }).join('');
+        chatBox.scrollTop = chatBox.scrollHeight;
+      } else {
+        chatBox.innerHTML = '<div class="text-center text-gray-500 py-12 text-xs">No messages yet. Start the conversation!</div>';
+      }
+    } catch(e) {
+      console.error("Chat fetch error", e);
+    }
+  }
+
+  window.deleteGlobalMessage = async function(messageIndex) {
+    if (!confirm('Are you sure you want to delete this message?')) return;
+    const username = localStorage.getItem('gh_username');
+    if (!username) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/delete-chat-message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageIndex, username })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        loadGlobalChatMessages();
+      } else {
+        alert('Failed to delete message: ' + (data.error || 'Unknown error'));
+      }
+    } catch (err) {
+      alert('Network error while deleting message.');
+    }
+  };
+
+  window.sendGlobalChatMessage = async function() {
+    const input = document.getElementById('global-chat-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    let username = localStorage.getItem('gh_username') || 'GuestModder';
+    let avatar = localStorage.getItem('gh_avatar') || 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
+
+    input.value = '';
+    try {
+      const res = await fetch(`${API_BASE}/api/send-chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, avatar, body: text })
+      });
+      const data = await res.json();
+      if (data.success) {
+        loadGlobalChatMessages();
+      } else {
+        alert('Failed to send message: ' + (data.error || 'Unknown error'));
+      }
+    } catch(err) {
+      alert('Network error sending message.');
+    }
+  };
+
+  document.getElementById('global-chat-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendGlobalChatMessage();
+  });
+
   async function fetchGists() {
     feedGrid.innerHTML = '<div class="text-center text-gray-500 py-12 text-xs">Loading community scripts instantly...</div>';
     try {
@@ -212,7 +356,6 @@ document.addEventListener('focusin', function(e) {
       downloadCountsMap = data.downloadCounts || {};
       const posts = data.posts || [];
 
-      // ✨ Foolproof Mapping: Handles both array of strings and object files format safely
       allCachedScripts = posts.map(p => {
         const filesObj = {};
         if (Array.isArray(p.files)) {
@@ -237,7 +380,7 @@ document.addEventListener('focusin', function(e) {
             avatar_url: p.avatar || p.owner?.avatar_url || '' 
           },
           files: filesObj,
-          screenshots: p.screenshots || {} // ✨ Screenshot URLs successfully pass honge
+          screenshots: p.screenshots || {}
         };
       });
       
@@ -248,9 +391,6 @@ document.addEventListener('focusin', function(e) {
       feedGrid.innerHTML = `<div class="text-center text-red-400 py-12 text-xs">Failed to fetch community feed. Please check your backend server.</div>`;
     }
   }
-
-
-
 
   function filterAndRenderFeed() {
     const query = (searchInput.value || '').toLowerCase().trim();
@@ -270,7 +410,7 @@ document.addEventListener('focusin', function(e) {
     filterAndRenderFeed();
   });
 
-    function renderFeed(communityScripts) {
+  function renderFeed(communityScripts) {
     if (communityScripts.length === 0) {
       feedGrid.innerHTML = '<div class="text-center text-gray-500 py-12 text-xs">No community scripts found matching your search.</div>';
       return;
@@ -288,11 +428,7 @@ document.addEventListener('focusin', function(e) {
       const postDate = new Date(g.created_at);
       const formattedDateTime = postDate.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ', ' + postDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-      // Screenshot Preview Rendering via Direct URL or Screenshots Object
-      let imageFilename = filenames.find(f => /\.(png|jpg|jpeg|webp)$/i.test(f));
       let imgSrc = '';
-
-      // 1. Pehle check karo agar g.screenshots ke andar direct URL stored hai (jaise ImgBB link)
       if (g.screenshots && typeof g.screenshots === 'object') {
         const keys = Object.keys(g.screenshots);
         if (keys.length > 0 && g.screenshots[keys[0]]) {
@@ -300,7 +436,7 @@ document.addEventListener('focusin', function(e) {
         }
       }
 
-      // 2. Agar screenshots object se nahi mila, toh filenames se try karo
+      let imageFilename = filenames.find(f => /\.(png|jpg|jpeg|webp)$/i.test(f));
       if (!imgSrc && imageFilename && g.files && g.files[imageFilename]) {
         imgSrc = g.files[imageFilename].content;
       }
@@ -317,7 +453,6 @@ document.addEventListener('focusin', function(e) {
         `;
       }
 
-      // Filter out screenshot from download file buttons list
       const downloadFilenames = filenames.filter(f => !/\.(png|jpg|jpeg|webp)$/i.test(f));
       let fileButtonsHtml = '';
       downloadFilenames.forEach(fname => {
@@ -352,8 +487,6 @@ document.addEventListener('focusin', function(e) {
       feedGrid.appendChild(messageCard);
     });
   }
-
-
 
   window.triggerDownload = function(gistId, filename) {
     const downloadUrl = `${API_BASE}/api/download-script?gistId=${gistId}&filename=${encodeURIComponent(filename)}`;
