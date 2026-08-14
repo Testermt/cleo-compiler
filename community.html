@@ -39,6 +39,11 @@ document.addEventListener('focusin', function(e) {
   .channel-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.625rem; border-radius: 0.25rem; color: #9ca3af; text-decoration: none; transition: background-color 0.2s, color 0.2s; }
   .channel-item:hover { background-color: #181d26; color: #e2e8f0; }
   .channel-item.active { background: rgba(232, 163, 61, 0.15); border: 1px solid rgba(232, 163, 61, 0.4); color: #e8a33d; font-weight: 600; }
+
+  /* WhatsApp Style Chat Colors */
+  .wa-incoming { background: #202c33; border: 1px solid #2a3942; }
+  .wa-outgoing { background: #005c4b; color: #e9eded; }
+  .wa-input-bg { background: #2a3942; }
 </style>
 </head>
 <body class="bg-[#0c0f14] min-h-screen flex h-screen overflow-hidden">
@@ -54,7 +59,6 @@ document.addEventListener('focusin', function(e) {
 
     <div class="flex-1 overflow-y-auto p-2 space-y-1 text-xs">
       <div class="text-[10px] font-bold text-[#8a6528] uppercase tracking-wider px-2 py-1">Radio &amp; Channels</div>
-      <!-- ✨ Global Chat Channel Added with proper styling -->
       <a href="#" onclick="openGlobalChat(event)" id="btn-global-chat" class="channel-item"># 🌐 global-chat</a>
       <a href="#" onclick="openPublicScripts(event)" id="btn-public-scripts" class="channel-item active"># 🌐 public-scripts</a>
       <a href="index.html" class="channel-item">💻 back-to-compiler</a>
@@ -72,7 +76,7 @@ document.addEventListener('focusin', function(e) {
     </div>
   </aside>
 
-  <!-- GTA SA MAIN CHAT AREA -->
+  <!-- GTA SA MAIN AREA -->
   <div class="flex-1 flex flex-col min-w-0 bg-[#0c0f14]">
     <header class="h-auto md:h-12 gta-header px-3 sm:px-4 py-2 md:py-0 flex flex-col md:flex-row items-center justify-between shadow-md shrink-0 gap-2">
       <div class="flex items-center justify-between w-full md:w-auto gap-2 font-bold text-gray-200 text-xs sm:text-sm min-w-0">
@@ -101,19 +105,31 @@ document.addEventListener('focusin', function(e) {
       </div>
     </header>
 
-    <!-- MAIN VIEW CONTAINER (Switches between Feed and Global Chat) -->
+    <!-- MAIN VIEW CONTAINER (Feed) -->
     <main id="community-feed-grid" class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
       <div class="text-center text-gray-500 py-12 text-xs">Loading community scripts from all users...</div>
     </main>
 
-    <!-- GLOBAL CHAT CONTAINER (Hidden by default) -->
-    <div id="global-chat-panel" class="hidden flex-1 flex flex-col min-h-0 bg-[#0c0f14] overflow-hidden">
-      <div id="chat-messages" class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
+    <!-- GLOBAL CHAT CONTAINER (WhatsApp Style Layout + Reply Feature) -->
+    <div id="global-chat-panel" class="hidden flex-1 flex flex-col min-h-0 bg-[#0b141a] overflow-hidden">
+      <!-- Chat Messages Scroll Area -->
+      <div id="chat-messages" class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 flex flex-col">
         <div class="text-center text-gray-500 py-12 text-xs">Connecting to Global Chat...</div>
       </div>
-      <div class="p-3 bg-[#12161d] border-t border-[#242b36] flex gap-2 shrink-0">
-        <input type="text" id="global-chat-input" placeholder="Type a global message..." class="flex-1 bg-[#181d26] border border-[#242b36] rounded px-3 py-2 text-xs text-gray-200 focus:outline-none focus:border-[#e8a33d]" />
-        <button onclick="sendGlobalChatMessage()" class="px-4 py-2 bg-[#e8a33d] text-black font-bold rounded text-xs hover:bg-[#d49233] shrink-0">Send</button>
+
+      <!-- Reply Preview Box (Hidden by default) -->
+      <div id="replyPreview" class="hidden bg-[#202c33] px-4 py-2 border-l-4 border-[#005c4b] flex items-center justify-between text-xs mx-2 mb-1 rounded-r shadow">
+        <div>
+          <span id="replyingTo" class="font-bold text-amber-400"></span>
+          <p id="replyingText" class="text-gray-400 truncate max-w-xs"></p>
+        </div>
+        <button onclick="cancelReply()" class="text-gray-400 hover:text-white font-bold px-2">✕</button>
+      </div>
+
+      <!-- Chat Input Area -->
+      <div class="p-3 bg-[#202c33] border-t border-gray-800 flex items-center gap-2 shrink-0">
+        <input type="text" id="global-chat-input" placeholder="Type a global message..." class="flex-1 wa-input-bg border border-gray-700 rounded-lg px-3.5 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-amber-500 placeholder-gray-400" />
+        <button onclick="sendGlobalChatMessage()" class="px-4 py-2.5 bg-[#005c4b] hover:opacity-90 text-white font-bold rounded-lg text-xs shadow shrink-0">Send</button>
       </div>
     </div>
   </div>
@@ -143,7 +159,6 @@ document.addEventListener('focusin', function(e) {
             <button id="detail-download-btn" onclick="triggerModalDownload()" class="w-full py-2 bg-[#181d26] border border-[#e8a33d]/50 text-[#e8a33d] font-bold rounded hover:bg-[#242b36] transition-colors text-xs shadow">💾 Download File</button>
           </div>
           <div class="text-[10px] text-gray-400 text-right pr-1" id="detail-download-count">Downloads: 0</div>
-          <!-- DELETE BUTTON (Only visible to the post owner) -->
           <div id="delete-container" class="hidden">
             <button id="delete-post-btn" class="w-full py-2 bg-[#e05a4e] text-white font-bold rounded hover:bg-[#c94b40] transition-colors text-xs shadow">🗑️ Delete This Post</button>
           </div>
@@ -207,6 +222,7 @@ document.addEventListener('focusin', function(e) {
   const gistsMap = {};
   let downloadCountsMap = {};
   let chatInterval = null;
+  let replyingToUser = null;
 
   refreshBtn.addEventListener('click', fetchGists);
   detailClose.addEventListener('click', () => detailModal.classList.add('hidden'));
@@ -250,6 +266,20 @@ document.addEventListener('focusin', function(e) {
     chatInterval = setInterval(loadGlobalChatMessages, 5000);
   };
 
+  // --- WHATSAPP STYLE CHAT WITH REPLY FEATURE ---
+  function openReply(username, text) {
+    replyingToUser = username;
+    document.getElementById('replyingTo').innerText = "Replying to " + username;
+    document.getElementById('replyingText').innerText = text;
+    document.getElementById('replyPreview').classList.remove('hidden');
+    document.getElementById('global-chat-input').focus();
+  }
+
+  window.cancelReply = function() {
+    replyingToUser = null;
+    document.getElementById('replyPreview').classList.add('hidden');
+  };
+
   async function loadGlobalChatMessages() {
     try {
       const res = await fetch(`${API_BASE}/api/get-chat?t=${Date.now()}`);
@@ -262,25 +292,23 @@ document.addEventListener('focusin', function(e) {
           let timeStr = '';
           if (m.time) {
             const d = new Date(m.time);
-            timeStr = d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
           }
 
           const msgUser = (m.user || '').trim().toLowerCase();
           const isOwner = currentUsername && msgUser === currentUsername;
 
+          // WhatsApp Alignment: Outgoing (You) on Right (Green), Incoming on Left (Gray)
+          const bubbleClass = isOwner ? 'self-end wa-outgoing' : 'self-start wa-incoming';
+
           return `
-            <div class="flex items-start justify-between gap-2.5 p-2 bg-[#12161d] rounded border border-[#242b36] group">
-              <div class="flex items-start gap-2.5 min-w-0 flex-1">
-                <img src="${m.avatar}" class="w-7 h-7 rounded-full shrink-0 border border-[#e8a33d]/40" />
-                <div class="min-w-0 flex-1">
-                  <div class="flex items-baseline justify-between">
-                    <span class="font-bold text-[#e8a33d] text-xs">${escapeHtml(m.user)}</span>
-                    <span class="text-[9px] text-gray-500">${timeStr}</span>
-                  </div>
-                  <p class="text-gray-300 text-xs break-words mt-0.5">${escapeHtml(m.body)}</p>
-                </div>
+            <div class="max-w-[85%] sm:max-w-[70%] rounded-lg p-2.5 relative shadow cursor-pointer ${bubbleClass}" onclick="openReply('${escapeHtml(m.user)}', '${escapeHtml(m.body).replace(/'/g, "\\'")}')">
+              <div class="flex items-center justify-between gap-2 mb-0.5">
+                <span class="text-[11px] font-bold ${isOwner ? 'text-green-200' : 'text-amber-400'}">${escapeHtml(m.user)}</span>
+                ${isOwner ? `<button onclick="event.stopPropagation(); deleteGlobalMessage(${index})" class="text-gray-300 hover:text-red-300 text-[10px]" title="Delete message">🗑️</button>` : ''}
               </div>
-              ${isOwner ? `<button onclick="deleteGlobalMessage(${index})" class="text-gray-500 hover:text-red-400 text-[10px] shrink-0 px-1 opacity-60 group-hover:opacity-100 transition-opacity" title="Delete message">🗑️</button>` : ''}
+              <div class="text-xs leading-relaxed break-words">${escapeHtml(m.body)}</div>
+              <div class="text-[9px] ${isOwner ? 'text-green-200' : 'text-gray-400'} text-right mt-1">${timeStr} ${isOwner ? '✓✓' : ''}</div>
             </div>
           `;
         }).join('');
@@ -315,20 +343,53 @@ document.addEventListener('focusin', function(e) {
     }
   };
 
-  window.sendGlobalChatMessage = async function() {
+    window.sendGlobalChatMessage = async function() {
     const input = document.getElementById('global-chat-input');
     const text = input.value.trim();
     if (!text) return;
 
-    let username = localStorage.getItem('gh_username') || 'GuestModder';
+    let username = localStorage.getItem('gh_username');
     let avatar = localStorage.getItem('gh_avatar') || 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
 
+    // Agar localStorage mein username nahi hai ya token configured hai, toh GitHub API se fetch kar lo
+    if (!username || username === 'GuestModder') {
+      const token = getValidToken();
+      if (token) {
+        try {
+          const userRes = await fetch('https://api.github.com/user', {
+            headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+          });
+          if (userRes.ok) {
+            const userData = await userRes.json();
+            username = userData.login;
+            avatar = userData.avatar_url;
+            localStorage.setItem('gh_username', username);
+            localStorage.setItem('gh_avatar', avatar);
+          }
+        } catch(e) {
+          console.error("Failed to fetch GitHub user", e);
+        }
+      }
+    }
+
+    // Agar fir bhi username na mile toh default 'Modder' rakh lo
+    if (!username) {
+      username = 'Modder';
+    }
+
+    let finalMessage = text;
+    if (replyingToUser) {
+      finalMessage = `Replying to @${replyingToUser}: ${text}`;
+    }
+
     input.value = '';
+    cancelReply();
+
     try {
       const res = await fetch(`${API_BASE}/api/send-chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, avatar, body: text })
+        body: JSON.stringify({ username, avatar, body: finalMessage })
       });
       const data = await res.json();
       if (data.success) {
@@ -340,6 +401,7 @@ document.addEventListener('focusin', function(e) {
       alert('Network error sending message.');
     }
   };
+
 
   document.getElementById('global-chat-input').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') sendGlobalChatMessage();
@@ -785,7 +847,7 @@ document.addEventListener('focusin', function(e) {
     } catch (err) {
       currentComments.pop();
       activeGistData.files['comments.json'] = { content: JSON.stringify(currentComments) };
-      renderComments(activeGistData);
+      renderComments(data.gist);
       alert('Network error while sending comment.');
     } finally {
       commentSubmitBtn.disabled = false;
