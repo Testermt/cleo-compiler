@@ -59,8 +59,38 @@ document.addEventListener('focusin', function(e) {
   .cursor-blink { animation: blink 1.2s step-end infinite; }
   .hex-addr { font-variant-numeric: tabular-nums; letter-spacing: 0.05em; }
   
-  #editor-container { height: 50vh; min-height: 320px; }
+          
+
+
+
+        
   
+        html { 
+    background: #0c0f14; 
+    scroll-behavior: smooth;
+    height: auto !important;
+  }
+  
+  body { 
+    background: #0c0f14; 
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto !important;
+    position: static !important;
+    height: auto !important;
+    overflow-x: hidden;
+  }
+
+
+  #editor-container { 
+    height: 50vh !important; 
+    min-height: 200px !important; 
+    -webkit-touch-callout: default !important;
+    -webkit-user-select: text !important;
+    user-select: text !important;
+  }
+
   /* Fullscreen IDE Mode */
   .fullscreen-editor { 
     position: fixed !important; 
@@ -69,11 +99,34 @@ document.addEventListener('focusin', function(e) {
     width: 100vw !important; 
     height: 100vh !important; 
     background: #0c0f14 !important; 
-    padding: 6px; 
-    display: flex; 
-    flex-direction: column; 
+    padding: 6px !important; 
+    display: flex !important; 
+    flex-direction: column !important; 
   }
-  .fullscreen-editor #editor-container { height: calc(100vh - 45px) !important; flex: 1; }
+
+  .fullscreen-editor #editor-container { 
+    height: calc(100vh - 50px) !important; 
+    flex: 1 !important; 
+  }
+
+
+
+    #editor-dropdown {
+    max-height: 75vh !important;
+    overflow-y: auto !important;
+    top: 100% !important;
+    right: 0 !important;
+  }
+
+  /* Dropdown ke buttons ki padding thodi kam ki taaki sab ek sath dikhein */
+  #editor-dropdown button {
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+  }
+
+
+
+
 
   .btn-press:active { transform: translateY(1px); }
   .error-line-highlight { background-color: rgba(224, 90, 78, 0.20) !important; border-left: 3px solid #e05a4e !important; }
@@ -81,9 +134,11 @@ document.addEventListener('focusin', function(e) {
   @media screen and (max-width: 640px) {
     header .max-w-6xl { padding-left: 8px; padding-right: 8px; }
     main { padding-left: 8px !important; padding-right: 8px !important; }
+    
     #editor-container { height: 46vh; min-height: 280px; }
     .monaco-editor { font-size: 14px !important; }
   }
+  
 </style>
 </head>
 <body class="bg-ink text-gray-200 font-mono min-h-screen flex flex-col">
@@ -92,7 +147,6 @@ document.addEventListener('focusin', function(e) {
   <input type="file" id="decompile-upload-input" accept=".cs,.csa,.csi" class="hidden" />
   <input type="file" id="db-upload-input" accept=".db" class="hidden" />
 
-  <!-- HEADER -->
   <header class="border-b border-hairline bg-panel/95 backdrop-blur sticky top-0 z-40">
     <div class="max-w-6xl mx-auto px-3 py-2.5 flex items-center justify-between gap-2">
       <div class="flex items-center gap-2 min-w-0">
@@ -108,25 +162,20 @@ document.addEventListener('focusin', function(e) {
       </div>
 
       <div class="flex items-center gap-1.5 shrink-0">
-        <!-- COMMUNITY BUTTON -->
         <a href="community.html" class="btn-press w-8 h-8 rounded-sm border border-teal/50 bg-teal/10 text-teal hover:bg-teal/20 transition-colors flex items-center justify-center text-sm font-bold text-decoration-none" title="Community Hub">
           🌐
         </a>
 
-        <!-- PUBLISH BUTTON -->
         <button id="header-publish-btn" class="btn-press w-8 h-8 rounded-sm border border-amber/50 bg-amber/10 text-amber hover:bg-amber/20 transition-colors flex items-center justify-center text-sm" title="Publish Script">
           🚀
         </button>
-<!-- Baki buttons ke sath Docs ka button add karein -->
-<a href="documentation.html" class="btn-style">📖 Docs</a>
+        <a href="documentation.html" class="btn-press text-[11px] px-2.5 py-1.5 rounded-sm border border-hairline text-gray-300 hover:text-amber transition-colors">📖 Docs</a>
 
-        <!-- OPCODES BUTTON -->
         <button id="opcode-btn"
           class="btn-press text-[11px] px-3 py-1.5 rounded-sm border border-hairline text-gray-300 hover:text-amber hover:border-amber/50 transition-colors">
           Opcodes
         </button>
 
-        <!-- GITHUB SYNC BUTTON -->
         <div class="relative">
           <button id="gh-config-btn"
             class="btn-press text-[11px] px-3 py-1.5 rounded-sm border border-hairline bg-panel2 text-gray-200 hover:border-amber/50 transition-colors flex items-center gap-1.5">
@@ -134,7 +183,6 @@ document.addEventListener('focusin', function(e) {
             <span id="gh-btn-text">GitHub</span>
           </button>
           
-          <!-- GITHUB DROPDOWN MENU -->
           <div id="gh-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-panel border border-hairline rounded-sm shadow-xl z-50 py-1 text-[11.5px]">
             <div class="px-3 py-1.5 border-b border-hairline text-gray-400 truncate">
               Repo: <strong id="gh-repo-label" class="text-amber">Not set</strong>
@@ -163,7 +211,45 @@ document.addEventListener('focusin', function(e) {
     </div>
   </header>
 
-  <!-- GITHUB CONFIG MODAL -->
+      <!-- ERROR POPUP MODAL WITH AI FIX BOX PLACEHOLDER -->
+  <div id="errorModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+    <div class="bg-panel border border-bad/40 rounded-sm max-w-lg w-full p-4 sm:p-5 flex flex-col gap-3 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-hairline pb-2.5">
+        <h2 id="errorModalTitle" class="font-display text-xs sm:text-sm text-bad font-semibold">❌ Compilation Error</h2>
+        <button onclick="closeErrorModal()" class="text-gray-500 hover:text-gray-200 text-lg leading-none">&times;</button>
+      </div>
+      
+      <div class="flex flex-col gap-2.5 text-[11.5px]">
+        <div>
+          <label class="block text-gray-400 mb-1">Error Message / Suggestion:</label>
+          <div id="errorModalMsg" class="bg-panel2 text-bad border border-bad/30 rounded-sm p-2.5 font-mono text-xs max-h-32 overflow-y-auto"></div>
+        </div>
+
+        <!-- ✨ AI Fix Assistant Box (Under Development) -->
+        <div>
+          <label class="block text-gray-400 mb-1 flex items-center justify-between">
+            <span>🤖 AI Fix Assistant:</span>
+            <span class="text-[9.5px] bg-amber/10 text-amber border border-amber/30 px-1.5 py-0.5 rounded">Under Development</span>
+          </label>
+          <div class="bg-panel2 text-gray-300 border border-hairline rounded-sm p-3 font-sans text-xs flex flex-col gap-2">
+            <p class="text-gray-400 leading-relaxed">
+              Our upcoming AI assistant will automatically analyze this error, pinpoint the faulty logic in your script, and provide instant code solutions.
+            </p>
+            <div class="flex items-center gap-1.5 text-[11px] text-teal font-mono">
+              <span>✨ Coming Soon in future updates</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex justify-end pt-2 border-t border-hairline">
+        <button onclick="closeErrorModal()" class="btn-press text-[11px] px-4 py-1.5 bg-panel2 border border-hairline text-gray-300 hover:text-gray-100 rounded-sm">Close</button>
+      </div>
+    </div>
+  </div>
+
+
+
   <div id="gh-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3">
     <div class="bg-panel border border-hairline rounded-sm max-w-md w-full p-4 sm:p-5 flex flex-col gap-3.5 shadow-2xl">
       <div class="flex items-center justify-between border-b border-hairline pb-2.5">
@@ -210,7 +296,6 @@ document.addEventListener('focusin', function(e) {
     </div>
   </div>
 
-  <!-- PUBLISH SCRIPT MODAL -->
   <div id="publish-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3">
     <div class="bg-panel border border-hairline rounded-sm max-w-md w-full p-4 sm:p-5 flex flex-col gap-3.5 shadow-2xl">
       <div class="flex items-center justify-between border-b border-hairline pb-2.5">
@@ -244,7 +329,6 @@ document.addEventListener('focusin', function(e) {
           </div>
           <span id="pub-compiled-status" class="text-[10px] text-gray-500 mt-0.5 block">No compiled file attached</span>
         </div>
-        <!-- ✨ SCREENSHOT PREVIEW UPLOAD FIELD -->
         <div>
           <label class="block text-gray-400 mb-1">Mod Screenshot (Optional - PNG/JPG):</label>
           <div class="flex gap-2">
@@ -266,11 +350,81 @@ document.addEventListener('focusin', function(e) {
     </div>
   </div>
 
-  <!-- MAIN -->
+  <div id="compiler-settings-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+    <div class="bg-panel border border-hairline rounded-sm max-w-md w-full max-h-[85vh] flex flex-col shadow-2xl">
+      <div class="border-b border-hairline px-4 py-3 flex items-center justify-between">
+        <h2 class="font-display text-sm text-amber font-semibold">⚙️ settings.ini (Compiler Config)</h2>
+        <button id="compiler-modal-close" class="text-gray-500 hover:text-gray-200 text-lg leading-none">&times;</button>
+      </div>
+      <div class="overflow-y-auto px-4 py-3 text-[11.5px] flex flex-col gap-2.5 text-gray-300">
+        <label class="flex items-center justify-between p-1.5 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline">
+          <span>Check Local Variables</span>
+          <input type="checkbox" id="comp-checklocal" class="accent-amber w-4 h-4" checked />
+        </label>
+        <label class="flex items-center justify-between p-1.5 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline">
+          <span>Strict If Validation</span>
+          <input type="checkbox" id="comp-strictif" class="accent-amber w-4 h-4" checked />
+        </label>
+        <label class="flex items-center justify-between p-1.5 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline">
+          <span>Add Extra Info</span>
+          <input type="checkbox" id="comp-extrainfo" class="accent-amber w-4 h-4" checked />
+        </label>
+        <label class="flex items-center justify-between p-1.5 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline">
+          <span>Show IMG Warning</span>
+          <input type="checkbox" id="comp-imgwarning" class="accent-amber w-4 h-4" checked />
+        </label>
+      </div>
+      <div class="flex justify-end gap-2 p-3 border-t border-hairline bg-panel2">
+        <button id="compiler-modal-save" class="btn-press text-[11.5px] px-4 py-1.5 bg-amber text-ink font-semibold rounded-sm hover:opacity-90">Save Compiler Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="decompile-settings-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+    <div class="bg-panel border border-hairline rounded-sm max-w-md w-full max-h-[85vh] flex flex-col shadow-2xl">
+      <div class="border-b border-hairline px-4 py-3 flex items-center justify-between">
+        <h2 class="font-display text-sm text-teal font-semibold">⚙️ settings.ini (Decompiler Config)</h2>
+        <button id="decompile-modal-close" class="text-gray-500 hover:text-gray-200 text-lg leading-none">&times;</button>
+      </div>
+      <div class="overflow-y-auto px-4 py-3 text-[11.5px] flex flex-col gap-2.5 text-gray-300">
+        <label class="flex items-center justify-between p-1.5 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline">
+          <span>Overwrite Output File</span>
+          <input type="checkbox" id="opt-overwrite" class="accent-teal w-4 h-4" />
+        </label>
+        <label class="flex items-center justify-between p-1.5 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline">
+          <span>Use If-And-Or Logic</span>
+          <input type="checkbox" id="opt-useifandor" class="accent-teal w-4 h-4" checked />
+        </label>
+        <label class="flex items-center justify-between p-1.5 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline">
+          <span>Decompiler Syntax Format</span>
+          <input type="checkbox" id="opt-syntax" class="accent-teal w-4 h-4" checked />
+        </label>
+        <label class="flex items-center justify-between p-1.5 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline">
+          <span>Insert Original Mission Names</span>
+          <input type="checkbox" id="opt-originalmissionnames" class="accent-teal w-4 h-4" checked />
+        </label>
+        <label class="flex items-center justify-between p-1.5 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline">
+          <span>Clean Labels Format</span>
+          <input type="checkbox" id="opt-labelsformat" class="accent-teal w-4 h-4" checked />
+        </label>
+        <label class="flex items-center justify-between p-1.5 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline">
+          <span>Use Custom Labels</span>
+          <input type="checkbox" id="opt-customlabels" class="accent-teal w-4 h-4" checked />
+        </label>
+        <label class="flex items-center justify-between p-1.5 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline">
+          <span>Use Custom Variables</span>
+          <input type="checkbox" id="opt-customvariables" class="accent-teal w-4 h-4" checked />
+        </label>
+      </div>
+      <div class="flex justify-end gap-2 p-3 border-t border-hairline bg-panel2">
+        <button id="decompile-modal-save" class="btn-press text-[11.5px] px-4 py-1.5 bg-teal text-ink font-semibold rounded-sm hover:opacity-90">Save Decompiler Settings</button>
+      </div>
+    </div>
+  </div>
+
   <main class="flex-1 max-w-6xl w-full mx-auto px-2 sm:px-4 py-3 flex flex-col gap-3">
 
-    <!-- KO-FI SUPPORT BANNER -->
-<div class="max-w-6xl mx-auto px-2 sm:px-4 my-2">
+    <div class="max-w-6xl mx-auto px-2 sm:px-4 my-2">
   <div class="bg-amber/10 border border-amber/30 rounded-sm p-3.5 text-[12px] text-amber text-center flex flex-col items-center justify-center gap-2.5 shadow-md">
     <p class="leading-relaxed">
       <strong>☕ Support ModderHub:</strong> Enjoying the GTA SA Online CLEO Compiler? Consider buying a coffee to help keep the server and tools running fast for mobile modders worldwide!
@@ -287,7 +441,29 @@ document.addEventListener('focusin', function(e) {
 </div>
 
 
-    <!-- Toolbar -->
+
+<script>
+  const BACKEND_URL = "https://cleo-compiler-backend.onrender.com";
+
+  function fetchDebugScreenshot() {
+    const modal = document.getElementById('debugModal');
+    const img = document.getElementById('debugScreenshotImg');
+    
+    img.src = `${BACKEND_URL}/api/take-screenshot?t=${Date.now()}`;
+    modal.style.display = 'flex';
+  }
+
+  function closeDebugModal() {
+    document.getElementById('debugModal').style.display = 'none';
+  }
+  
+      
+
+  
+</script>
+
+
+
     <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-between gap-2.5 bg-panel p-2.5 sm:p-3 rounded-sm border border-hairline">
       <div class="flex flex-wrap items-center gap-2 text-[11.5px] text-gray-400">
         <div class="flex items-center gap-1.5 flex-1 sm:flex-initial">
@@ -316,6 +492,8 @@ document.addEventListener('focusin', function(e) {
       </div>
 
       <div class="flex flex-wrap items-center gap-1.5">
+        <button id="compiler-settings-btn" class="btn-press text-[11.5px] px-2 py-1.5 rounded-sm border border-hairline text-amber hover:bg-amber/10 transition-colors" title="Compiler Config">⚙️ Comp.Config</button>
+        <button id="decompile-settings-btn" class="btn-press text-[11.5px] px-2 py-1.5 rounded-sm border border-hairline text-teal hover:bg-teal/10 transition-colors" title="Decompiler Config">⚙️ Decomp.Config</button>
         <button id="db-upload-btn" class="btn-press text-[11.5px] px-2.5 py-1.5 rounded-sm border border-hairline text-gray-300 hover:text-amber transition-colors">Custom .db</button>
         <button id="decompile-btn" class="btn-press text-[11.5px] px-2.5 py-1.5 rounded-sm border border-hairline text-gray-300 hover:text-amber transition-colors">Decompile</button>
         <button id="upload-btn" class="btn-press text-[11.5px] px-2.5 py-1.5 rounded-sm border border-hairline text-gray-300 hover:text-amber transition-colors">Upload</button>
@@ -323,7 +501,6 @@ document.addEventListener('focusin', function(e) {
       </div>
     </div>
 
-    <!-- Compile & Download Button Row -->
     <div>
       <button id="compile-btn" class="btn-press text-xs sm:text-sm py-2.5 px-4 rounded-sm bg-amber text-ink font-bold transition-colors flex items-center justify-center gap-2 w-full disabled:opacity-50 shadow-md">
         <svg id="compile-spinner" class="hidden animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
@@ -334,7 +511,6 @@ document.addEventListener('focusin', function(e) {
       </button>
     </div>
 
-    <!-- Advanced CLI Flags Bar -->
     <details class="bg-panel2/60 border border-hairline rounded-sm px-3.5 py-2.5 text-[11.5px]">
       <summary class="cursor-pointer text-amber font-semibold select-none flex items-center gap-2">⚙️ Advanced Compiler &amp; Decompiler Flags</summary>
       <div class="pt-3 flex flex-col gap-2.5 border-t border-hairline/60 mt-2 text-gray-400">
@@ -343,6 +519,7 @@ document.addEventListener('focusin', function(e) {
           <label class="flex items-center gap-1.5 cursor-pointer hover:text-amber"><input type="checkbox" id="check-conditions-cb" class="accent-amber rounded-sm" checked><span>--check-conditions</span></label>
           <label class="flex items-center gap-1.5 cursor-pointer hover:text-amber"><input type="checkbox" id="no-splash-cb" class="accent-amber rounded-sm" checked><span>--no-splash</span></label>
           <label class="flex items-center gap-1.5 cursor-pointer hover:text-amber"><input type="checkbox" id="case-sensitive-cb" class="accent-amber rounded-sm"><span>--case-sensitive</span></label>
+          <label class="flex items-center gap-1.5 cursor-pointer hover:text-amber"><input type="checkbox" id="frontend-linter-cb" class="accent-amber rounded-sm"><span>Frontend Linter</span></label>
         </div>
 
         <div class="flex flex-wrap items-center gap-3 pt-1 border-t border-hairline/60">
@@ -365,41 +542,49 @@ document.addEventListener('focusin', function(e) {
       </div>
     </details>
 
-    <!-- Editor Wrapper with File Tabs & Vertical 3-Dot Menu -->
-    <div id="editor-wrapper-box" class="rounded-sm border border-hairline overflow-hidden shadow-2xl shadow-black/40 flex flex-col bg-panel">
-      <!-- TABS & 3-DOT MENU BAR -->
-      <div class="bg-panel2 border-b border-hairline px-2.5 py-1.5 flex items-center justify-between gap-2 text-[11px] text-gray-400 relative">
+        <div id="editor-wrapper-box" class="rounded-sm border border-hairline overflow-hidden shadow-2xl shadow-black/40 flex flex-col bg-panel">
+            <div class="bg-panel2 border-b border-hairline px-2.5 py-1.5 flex items-center justify-between gap-2 text-[11px] text-gray-400 relative">
         <div id="file-tabs-container" class="flex items-center gap-1.5 overflow-x-auto flex-1 py-0.5"></div>
         
-        <!-- VERTICAL 3-DOT MENU BUTTON & DROPDOWN -->
-        <div class="relative shrink-0">
-          <button id="editor-menu-btn" class="px-2.5 py-1 rounded bg-panel hover:bg-hairline text-amber font-bold text-sm tracking-widest transition-colors" title="Editor Menu">⋮</button>
+        <!-- ✨ Fullscreen icon aur 3-dot menu ko horizontal align kiya -->
+                <div class="flex items-center gap-1 shrink-0">
+          <button id="fullscreen-dropdown" class="btn-press px-2 py-1 rounded bg-panel hover:bg-hairline text-amber font-bold text-xs flex items-center justify-center" title="Fullscreen">⛶</button>
+          <button id="editor-menu-btn" class="px-2 py-1 rounded bg-panel hover:bg-hairline text-amber font-bold text-xs tracking-widest transition-colors" title="Editor Menu">⋮</button>
           
-          <div id="editor-dropdown" class="hidden absolute right-0 mt-1.5 w-40 bg-panel border border-hairline rounded-sm shadow-xl z-50 py-1 text-[11.5px]">
+          <div id="editor-dropdown" class="hidden absolute right-0 mt-1.5 w-48 bg-panel border border-hairline rounded-sm shadow-xl z-50 py-1 text-[11.5px]">
             <button id="new-tab-dropdown" class="w-full text-left px-3 py-2 text-amber hover:bg-panel2 transition-colors flex items-center gap-2"><span>+ New Tab</span></button>
+            <button id="share-tab-dropdown" class="w-full text-left px-3 py-2 text-gray-300 hover:bg-panel2 hover:text-teal transition-colors flex items-center gap-2"><span>🔗 Copy / Share Code</span></button>
+            <button id="paste-menu-dropdown" class="w-full text-left px-3 py-2 text-gray-300 hover:bg-panel2 hover:text-amber transition-colors flex items-center gap-2"><span>📋 Paste Code</span></button>
+            <div class="border-t border-hairline my-1"></div>
+            <button id="goto-line-dropdown" class="w-full text-left px-3 py-2 text-gray-300 hover:bg-panel2 hover:text-amber transition-colors flex items-center gap-2"><span>🎯 Goto Line</span></button>
+            <button id="find-replace-dropdown" class="w-full text-left px-3 py-2 text-gray-300 hover:bg-panel2 hover:text-amber transition-colors flex items-center gap-2"><span>🔍 Find &amp; Replace</span></button>
+            <div class="border-t border-hairline my-1"></div>
             <button id="undo-dropdown" class="w-full text-left px-3 py-2 text-gray-300 hover:bg-panel2 hover:text-amber transition-colors flex items-center gap-2"><span>↩ Undo</span></button>
             <button id="redo-dropdown" class="w-full text-left px-3 py-2 text-gray-300 hover:bg-panel2 hover:text-amber transition-colors flex items-center gap-2"><span>↪ Redo</span></button>
             <div class="border-t border-hairline my-1"></div>
-            <button id="fullscreen-dropdown" class="w-full text-left px-3 py-2 text-amber hover:bg-panel2 transition-colors flex items-center gap-2"><span id="fullscreen-text">⛶ Fullscreen</span></button>
+            <button id="wordwrap-dropdown" class="w-full text-left px-3 py-2 text-gray-300 hover:bg-panel2 hover:text-amber transition-colors flex items-center justify-between"><span>Word Wrap</span><span id="wrap-status-text" class="text-[10px] text-teal">OFF</span></button>
+            <button id="readonly-dropdown" class="w-full text-left px-3 py-2 text-gray-300 hover:bg-panel2 hover:text-amber transition-colors flex items-center justify-between"><span>Read Only</span><span id="readonly-status-text" class="text-[10px] text-gray-500">OFF</span></button>
           </div>
         </div>
+
       </div>
+
       <div id="editor-container"></div>
     </div>
 
-    <!-- Console -->
-    <div class="rounded-sm border border-hairline bg-panel flex flex-col">
-      <div class="border-b border-hairline px-3 py-1.5 flex items-center justify-between">
-        <span class="text-[11px] text-gray-500 hex-addr">CONSOLE</span>
-        <button id="console-clear" class="text-[11px] text-gray-600 hover:text-gray-300 transition-colors">clear</button>
-      </div>
-      <div id="console-log" class="h-32 overflow-y-auto px-3 py-2 text-[11.5px] leading-relaxed space-y-1">
-        <div class="text-gray-600">&gt; awaiting compile&hellip; <span class="cursor-blink">_</span></div>
-      </div>
-    </div>
+
+    <div id="console-wrapper" class="rounded-sm border border-hairline bg-panel flex flex-col">
+  <div class="border-b border-hairline px-3 py-1.5 flex items-center justify-between">
+    <span class="text-[11px] text-gray-500 hex-addr">CONSOLE</span>
+    <button id="console-clear" class="text-[11px] text-gray-600 hover:text-gray-300 transition-colors">clear</button>
+  </div>
+  <div id="console-log" class="h-32 overflow-y-auto px-3 py-2 text-[11.5px] leading-relaxed space-y-1">
+    <div class="text-gray-600">&gt; awaiting compile&hellip; <span class="cursor-blink">_</span></div>
+  </div>
+</div>
+
   </main>
 
-  <!-- OPCODE MODAL -->
   <div id="opcode-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3">
     <div class="bg-panel border border-hairline rounded-sm max-w-2xl w-full max-h-[80vh] flex flex-col">
       <div class="border-b border-hairline px-4 py-3 flex items-center justify-between">
@@ -432,7 +617,101 @@ document.addEventListener('focusin', function(e) {
   let activeTabId = 'tab-1';
   let editor;
 
+  // Error Modal Control Functions
+    // ✨ Updated Modal Function with Dynamic Title & Line Number +1 Offset Fix
+      // ✨ Updated Modal Function to Strip Path and Show Only filename:line & error
+    function showErrorModal(errorText, cmdText, isDecompile = false) {
+    const titleEl = document.getElementById('errorModalTitle');
+    const errTypeTitle = isDecompile ? 'Decompilation Error' : 'Compilation Error';
+    if (titleEl) {
+      titleEl.textContent = `❌ ${errTypeTitle}`;
+    }
+
+    let formattedError = errorText || 'Unknown error occurred.';
+
+    // ✨ Clean absolute path and apply +1 line offset
+    formattedError = formattedError.replace(/[A-Z]:\\[^:\n]+\\([^\\]+\.(txt|cs|csa|csi)):(\d+)/gi, (match, filename, ext, lineNum) => {
+      return `${filename}:${parseInt(lineNum, 10) + 1}`;
+    });
+    formattedError = formattedError.replace(/(?:[a-zA-Z]:|\\|\/).*?[\\/]([^\\]+\.(txt|cs|csa|csi)):(\d+)/gi, (match, filename, ext, lineNum) => {
+      return `${filename}:${parseInt(lineNum, 10) + 1}`;
+    });
+
+    // ✨ Pop-up modal mein error set karna
+    document.getElementById('errorModalMsg').textContent = formattedError;
+    document.getElementById('errorModal').classList.remove('hidden');
+
+    // ✨ Wahi same error ab console mein bhi log ho jayega!
+    logLine(`[${errTypeTitle}] ${escapeHtml(formattedError)}`, 'error');
+  }
+
+  function closeErrorModal() {
+    document.getElementById('errorModal').classList.add('hidden');
+  }
+
+
+
+  
+
+  // ==========================================
+  // LOCALSTORAGE SETTINGS PERSISTENCE
+  // ==========================================
+  function saveCompilerSettings() {
+    const settings = {
+      checkLocal: document.getElementById('comp-checklocal').checked,
+      strictIf: document.getElementById('comp-strictif').checked,
+      extraInfo: document.getElementById('comp-extrainfo').checked,
+      imgWarning: document.getElementById('comp-imgwarning').checked
+    };
+    localStorage.setItem('compiler_settings', JSON.stringify(settings));
+  }
+
+  function loadCompilerSettings() {
+    const saved = localStorage.getItem('compiler_settings');
+    if (saved) {
+      try {
+        const s = JSON.parse(saved);
+        if (s.checkLocal !== undefined) document.getElementById('comp-checklocal').checked = s.checkLocal;
+        if (s.strictIf !== undefined) document.getElementById('comp-strictif').checked = s.strictIf;
+        if (s.extraInfo !== undefined) document.getElementById('comp-extrainfo').checked = s.extraInfo;
+        if (s.imgWarning !== undefined) document.getElementById('comp-imgwarning').checked = s.imgWarning;
+      } catch (e) {}
+    }
+  }
+
+  function saveDecompilerSettings() {
+    const settings = {
+      overwrite: document.getElementById('opt-overwrite').checked,
+      useIfAndOr: document.getElementById('opt-useifandor').checked,
+      syntax: document.getElementById('opt-syntax').checked,
+      origNames: document.getElementById('opt-originalmissionnames').checked,
+      labelsFormat: document.getElementById('opt-labelsformat').checked,
+      customLabels: document.getElementById('opt-customlabels').checked,
+      customVars: document.getElementById('opt-customvariables').checked
+    };
+    localStorage.setItem('decompiler_settings', JSON.stringify(settings));
+  }
+
+  function loadDecompilerSettings() {
+    const saved = localStorage.getItem('decompiler_settings');
+    if (saved) {
+      try {
+        const s = JSON.parse(saved);
+        if (s.overwrite !== undefined) document.getElementById('opt-overwrite').checked = s.overwrite;
+        if (s.useIfAndOr !== undefined) document.getElementById('opt-useifandor').checked = s.useIfAndOr;
+        if (s.syntax !== undefined) document.getElementById('opt-syntax').checked = s.syntax;
+        if (s.origNames !== undefined) document.getElementById('opt-originalmissionnames').checked = s.origNames;
+        if (s.labelsFormat !== undefined) document.getElementById('opt-labelsformat').checked = s.labelsFormat;
+        if (s.customLabels !== undefined) document.getElementById('opt-customlabels').checked = s.customLabels;
+        if (s.customVars !== undefined) document.getElementById('opt-customvariables').checked = s.customVars;
+      } catch (e) {}
+    }
+  }
+
   window.addEventListener('DOMContentLoaded', async () => {
+    loadCompilerSettings();
+    loadDecompilerSettings();
+
     const params = new URLSearchParams(window.location.search);
     const gistId = params.get('load_gist');
     const filename = params.get('file');
@@ -451,6 +730,25 @@ document.addEventListener('focusin', function(e) {
         }
       } catch(e) { logLine('Failed to load community script.', 'error'); }
     }
+  });
+
+  // Modal UI Logic
+  const compModal = document.getElementById('compiler-settings-modal');
+  document.getElementById('compiler-settings-btn').addEventListener('click', () => compModal.classList.remove('hidden'));
+  document.getElementById('compiler-modal-close').addEventListener('click', () => compModal.classList.add('hidden'));
+  document.getElementById('compiler-modal-save').addEventListener('click', () => {
+    saveCompilerSettings();
+    compModal.classList.add('hidden');
+    logLine('Compiler settings saved & updated.', 'success');
+  });
+
+  const decModal = document.getElementById('decompile-settings-modal');
+  document.getElementById('decompile-settings-btn').addEventListener('click', () => decModal.classList.remove('hidden'));
+  document.getElementById('decompile-modal-close').addEventListener('click', () => decModal.classList.add('hidden'));
+  document.getElementById('decompile-modal-save').addEventListener('click', () => {
+    saveDecompilerSettings();
+    decModal.classList.add('hidden');
+    logLine('Decompiler settings saved & updated.', 'success');
   });
 
   const tabsContainer = document.getElementById('file-tabs-container');
@@ -508,8 +806,13 @@ document.addEventListener('focusin', function(e) {
   window.addEventListener('click', () => {
     editorDropdown.classList.add('hidden');
   });
+  
+  
+  
+  
+  
 
-  document.getElementById('new-tab-dropdown').addEventListener('click', () => {
+    document.getElementById('new-tab-dropdown').addEventListener('click', () => {
     editorDropdown.classList.add('hidden');
     const tabNum = openTabs.length + 1;
     const newId = 'tab-' + Date.now();
@@ -532,8 +835,18 @@ document.addEventListener('focusin', function(e) {
     if (editor) editor.trigger('keyboard', 'redo', null);
   });
 
+        // ⛶ Fullscreen Toggle with URL Bar Hidden
   document.getElementById('fullscreen-dropdown').addEventListener('click', () => {
     editorDropdown.classList.add('hidden');
+    
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {});
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+
     editorBox.classList.toggle('fullscreen-editor');
     if (editorBox.classList.contains('fullscreen-editor')) {
       fullscreenText.textContent = '🗗 Exit Fullscreen';
@@ -544,6 +857,124 @@ document.addEventListener('focusin', function(e) {
     }
     if (editor) editor.layout();
   });
+
+
+
+  // 🔗 Share Code (Copy code to clipboard)
+    // 🔗 Share Code (Mobile Friendly Fallback Fix)
+  document.getElementById('share-tab-dropdown').addEventListener('click', () => {
+    editorDropdown.classList.add('hidden');
+    if (!editor) return;
+    const code = editor.getValue();
+    
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(() => {
+        logLine('Script code copied to clipboard successfully!', 'success');
+        alert('Code copied to clipboard!');
+      }).catch(err => {
+        fallbackCopyTextToClipboard(code);
+      });
+    } else {
+      fallbackCopyTextToClipboard(code);
+    }
+  });
+
+  function fallbackCopyTextToClipboard(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    
+    // Avoid scrolling to bottom
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        logLine('Script code copied to clipboard successfully!', 'success');
+        alert('Code copied to clipboard!');
+      } else {
+        alert('Failed to copy code.');
+      }
+    } catch (err) {
+      alert('Unable to copy, please select and copy manually.');
+    }
+
+    document.body.removeChild(textArea);
+  }
+
+
+  // 🎯 Goto Line
+  document.getElementById('goto-line-dropdown').addEventListener('click', () => {
+    editorDropdown.classList.add('hidden');
+    if (!editor) return;
+    const line = prompt('Enter line number to jump to:');
+    if (line) {
+      const lineNum = parseInt(line, 10);
+      editor.revealLineInCenter(lineNum);
+      editor.setPosition({ lineNumber: lineNum, column: 1 });
+      editor.focus();
+    }
+  });
+
+  // 🔍 Find & Replace (Monaco built-in find widget)
+  document.getElementById('find-replace-dropdown').addEventListener('click', () => {
+    editorDropdown.classList.add('hidden');
+    if (!editor) return;
+    editor.trigger('', 'actions.find', null);
+  });
+
+  // 📄 Word Wrap Toggle
+  document.getElementById('wordwrap-dropdown').addEventListener('click', () => {
+    editorDropdown.classList.add('hidden');
+    if (!editor) return;
+    const currentWrap = editor.getOption(monaco.editor.EditorOption.wordWrap);
+    const newWrap = currentWrap === 'on' ? 'off' : 'on';
+    editor.updateOptions({ wordWrap: newWrap });
+    document.getElementById('wrap-status-text').textContent = newWrap === 'on' ? 'ON' : 'OFF';
+    document.getElementById('wrap-status-text').className = newWrap === 'on' ? 'text-[10px] text-good font-bold' : 'text-[10px] text-teal';
+    logLine(`Editor word wrap: ${newWrap.toUpperCase()}`, 'info');
+  });
+
+  // 🔒 Read Only Toggle
+  document.getElementById('readonly-dropdown').addEventListener('click', () => {
+    editorDropdown.classList.add('hidden');
+    if (!editor) return;
+    const isReadOnly = editor.getOption(monaco.editor.EditorOption.readOnly);
+    editor.updateOptions({ readOnly: !isReadOnly });
+    document.getElementById('readonly-status-text').textContent = !isReadOnly ? 'ON' : 'OFF';
+    document.getElementById('readonly-status-text').className = !isReadOnly ? 'text-[10px] text-bad font-bold' : 'text-[10px] text-gray-500';
+    logLine(`Editor read-only mode: ${!isReadOnly ? 'ENABLED' : 'DISABLED'}`, 'warn');
+ 
+   // 📋 Paste Code from Clipboard (Mobile Friendly)
+  document.getElementById('paste-menu-dropdown').addEventListener('click', async () => {
+    editorDropdown.classList.add('hidden');
+    if (!editor) return;
+    try {
+      const text = await navigator.clipboard.readText();
+      const selection = editor.getSelection();
+      editor.executeEdits('menu-paste', [{ range: selection, text: text, forceMoveMarkers: true }]);
+      logLine('Text pasted from clipboard successfully!', 'success');
+    } catch (err) {
+      alert('Clipboard permission denied or not supported by browser. Use long-press inside editor or keyboard shortcut.');
+    }
+  });
+
+                  
+
+
+
+  
+ 
+});
+
+    
+    
+
 
   // --- PUBLISH SCRIPT MODAL & EVENT LISTENERS ---
   const publishModal = document.getElementById('publish-modal');
@@ -559,7 +990,6 @@ document.addEventListener('focusin', function(e) {
   const pubBrowseCompiled = document.getElementById('pub-browse-compiled');
   const pubCompiledStatus = document.getElementById('pub-compiled-status');
 
-  // ✨ Screenshot Upload Elements
   const pubScreenshotName = document.getElementById('pub-screenshot-name');
   const pubScreenshotFileInput = document.getElementById('pub-screenshot-file-input');
   const pubBrowseScreenshot = document.getElementById('pub-browse-screenshot');
@@ -605,7 +1035,6 @@ document.addEventListener('focusin', function(e) {
     reader.readAsDataURL(file);
   });
 
-  // ✨ Screenshot Browse Logic
   pubBrowseScreenshot.addEventListener('click', () => pubScreenshotFileInput.click());
   pubScreenshotFileInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
@@ -674,13 +1103,12 @@ document.addEventListener('focusin', function(e) {
     }
   }
 
-    pubModalSubmit.addEventListener('click', async () => {
+  pubModalSubmit.addEventListener('click', async () => {
     const token = localStorage.getItem('gh_token');
     const title = pubTitleInput.value.trim();
     const sourceFilename = pubSourceName.value.trim() || 'script.txt';
     const compiledFilename = pubCompiledName.value.trim();
     
-    // ✨ Screenshot File Input element se direct file uthayein
     const screenshotFile = pubScreenshotFileInput.files[0];
 
     if (!title) {
@@ -711,8 +1139,6 @@ document.addEventListener('focusin', function(e) {
 
       await registerUserToHub(username);
 
-      // ✨ 1. Agar user ne screenshot select kiya hai, toh use ImgBB API par upload karke direct URL lo
-          // ✨ ImgBB API Upload Logic with your key
       let screenshotUrl = '';
       if (screenshotFile) {
         const formData = new FormData();
@@ -724,10 +1150,9 @@ document.addEventListener('focusin', function(e) {
         });
         const imgData = await imgRes.json();
         if (imgData.success) {
-          screenshotUrl = imgData.data.url; // Direct image URL mil jayega!
+          screenshotUrl = imgData.data.url;
         }
       }
-
 
       const filesPayload = {
         [sourceFilename]: { content: sourceCode },
@@ -759,7 +1184,6 @@ document.addEventListener('focusin', function(e) {
       if (res.ok) {
         const gistData = await res.json();
         
-        // ✨ 2. Backend ko publish request bhejte waqt screenshot URL pass karein (No Base64 heavy data)
         try {
           await fetch(`${API_BASE}/api/publish-post`, {
             method: 'POST',
@@ -788,7 +1212,6 @@ document.addEventListener('focusin', function(e) {
       alert(`Network error: ${err.message}`);
     }
   });
-
 
   const ghConfigBtn = document.getElementById('gh-config-btn');
   const ghDropdown = document.getElementById('gh-dropdown');
@@ -859,6 +1282,8 @@ document.addEventListener('focusin', function(e) {
   window.addEventListener('click', (e) => {
     if (e.target === ghModal) ghModal.classList.add('hidden');
     if (e.target === publishModal) publishModal.classList.add('hidden');
+    const errorModalEl = document.getElementById('errorModal');
+    if (e.target === errorModalEl) errorModalEl.classList.add('hidden');
     ghDropdown.classList.add('hidden');
   });
 
@@ -1091,16 +1516,35 @@ document.addEventListener('focusin', function(e) {
   document.getElementById('opcode-close').addEventListener('click', () => opcodeModal.classList.add('hidden'));
   opcodeModal.addEventListener('click', (e) => { if (e.target === opcodeModal) opcodeModal.classList.add('hidden'); });
 
-  const consoleLog = document.getElementById('console-log');
+              const consoleLog = document.getElementById('console-log');
   function logLine(text, type = 'info') {
-    const colors = { info: 'text-gray-400', success: 'text-good', error: 'text-bad', warn: 'text-amber' };
+    // 🛑 Sirf [Compilation Error] aur [Decompilation Error] wale duplicate prefix ko hatao, baaki 'error:' wale logs console par dikhenge!
+ //   if (text.includes('Queue') || text.includes('[Compilation Error]') || text.includes('[Decompilation Error]')) return;
+if (text.includes('Command:') || text.includes('Queue') || text.includes('[Compilation Error]') || text.includes('[Decompilation Error]')) return;
+
+    const colors = { success: 'text-good', error: 'text-bad', warn: 'text-amber', info: 'text-gray-400' };
     const line = document.createElement('div');
-    line.className = colors[type] || colors.info;
-    const ts = new Date().toLocaleTimeString('en-GB', { hour12: false });
-    line.innerHTML = `<span class="text-gray-700">[${ts}]</span> ${text}`;
-    consoleLog.appendChild(line);
-    consoleLog.scrollTop = consoleLog.scrollHeight;
+    line.className = colors[type] || 'text-gray-300';
+    
+    let cleanText = text;
+    if (type === 'error') {
+      cleanText = cleanText.replace(/[A-Z]:\\[^:\n]+\\([^\\]+\.(txt|cs|csa|csi)):(\d+)/gi, (match, filename, ext, lineNum) => {
+        return `${filename}:${parseInt(lineNum, 10) + 1}`;
+      });
+    }
+
+    line.innerHTML = cleanText;
+    if (consoleLog) {
+      consoleLog.appendChild(line);
+      consoleLog.scrollTop = consoleLog.scrollHeight;
+    }
   }
+
+
+
+
+
+
   document.getElementById('console-clear').addEventListener('click', () => { consoleLog.innerHTML = ''; });
 
   let uploadedDbBase64 = null;
@@ -1141,7 +1585,7 @@ document.addEventListener('focusin', function(e) {
     fileInput.value = '';
   });
 
-  // DECOMPILE SCRIPT
+  // DECOMPILE SCRIPT WITH CONFIG & ERROR MODAL INTEGRATION
   const decompileBtn = document.getElementById('decompile-btn');
   const decompileInput = document.getElementById('decompile-upload-input');
 
@@ -1164,8 +1608,25 @@ document.addEventListener('focusin', function(e) {
     const debugBits = `${codeOffsets}${ignoreUnknown}${varCounter}${constantIndexes}${skipScmHeader}${skipExtraInfo}${sb3Compat}`;
     const customFlags = document.getElementById('custom-flags-input').value;
 
+    const decompilerConfig = {
+      overwriteOutputFile: document.getElementById('opt-overwrite').checked ? 1 : 0,
+      useIfAndOr: document.getElementById('opt-useifandor').checked ? 1 : 0,
+      syntax: document.getElementById('opt-syntax').checked ? 1 : 0,
+      insertOriginalMissionNames: document.getElementById('opt-originalmissionnames').checked ? 1 : 0,
+      labelsFormat: document.getElementById('opt-labelsformat').checked ? 1 : 0,
+      customLabels: document.getElementById('opt-customlabels').checked ? 1 : 0,
+      customVariables: document.getElementById('opt-customvariables').checked ? 1 : 0,
+    };
+
     logLine(`Reading file <span class="text-amber">${escapeHtml(file.name)}</span> for decompilation…`, 'info');
     logLine(`[Queue] Request sent to server queue, waiting for processing…`, 'warn');
+
+    decompileBtn.disabled = true;
+    let startTime = Date.now();
+    let timerInterval = setInterval(() => {
+      let seconds = ((Date.now() - startTime) / 1000).toFixed(1);
+      decompileBtn.textContent = `Decompiling… (${seconds}s)`;
+    }, 100);
 
     const reader = new FileReader();
     reader.onload = async (event) => {
@@ -1180,28 +1641,47 @@ document.addEventListener('focusin', function(e) {
             game: selectedGame,
             useSource,
             debugBits,
+            decompilerConfig,
             customFlags
           }),
         });
         const data = await response.json();
+        const executedCmd = data.cmd || 'No command generated';
+        
         if (data.cmd) {
           logLine(`Command: <span class="text-amber">${escapeHtml(data.cmd)}</span>`, 'warn');
         }
         if (!response.ok || !data.success) {
-          logLine(`Decompilation failed: ${escapeHtml(data.error || 'Unknown error')}`, 'error');
+          const errorMsg = data.error || 'Unknown decompilation error.';
+         // logLine(`Decompilation failed: ${escapeHtml(errorMsg)}`, 'error');
+          // ✨ Trigger Error Modal for Decompilation Errors / Timeouts
+          showErrorModal(errorMsg, executedCmd, true);
           return;
         }
-        if (editor && data.code) {
+                if (editor && data.code) {
           clearEditorErrorMarkers();
-          editor.setValue(data.code);
-          const activeTab = openTabs.find(t => t.id === activeTabId);
-          if (activeTab) activeTab.name = file.name.replace(/\.(cs|csa|csi)$/i, '.txt');
-          renderTabs();
-          logLine(`Successfully decompiled <span class="text-good">${escapeHtml(file.name)}</span>!`, 'success');
+          
+          // ✨ Purane tab ka content save karke ek naya tab banao decompile file ke liye
+          const currentTab = openTabs.find(t => t.id === activeTabId);
+          if (currentTab) currentTab.content = editor.getValue();
+
+          const newId = 'tab-' + Date.now();
+          const newName = file.name.replace(/\.(cs|csa|csi)$/i, '.txt');
+          
+          openTabs.push({ id: newId, name: newName, content: data.code });
+          switchTab(newId);
+
+          let elapsedSeconds = ((Date.now() - startTime) / 1000).toFixed(1);
+          logLine(`Successfully decompiled <span class="text-good">${escapeHtml(file.name)}</span> in <span class="text-amber">${elapsedSeconds}s</span>!`, 'success');
         }
+
       } catch (err) {
         logLine(`Error: ${escapeHtml(err.message)}`, 'error');
+        showErrorModal(err.message, 'Network / Request Failed');
       } finally {
+        clearInterval(timerInterval);
+        decompileBtn.disabled = false;
+        decompileBtn.textContent = 'Decompile';
         decompileInput.value = '';
       }
     };
@@ -1274,7 +1754,8 @@ document.addEventListener('focusin', function(e) {
     if (editor && window.monaco && lineNum && typeof lineNum === 'number') {
       const model = editor.getModel();
       const maxLines = model.getLineCount();
-      const safeLine = Math.max(1, Math.min(Math.floor(lineNum), maxLines));
+      const adjustedLine = lineNum; 
+      const safeLine = Math.max(1, Math.min(Math.floor(adjustedLine), maxLines));
 
       monaco.editor.setModelMarkers(model, 'cleo-compiler', [{
         startLineNumber: safeLine, startColumn: 1, endLineNumber: safeLine, endColumn: model.getLineMaxColumn(safeLine),
@@ -1338,7 +1819,7 @@ document.addEventListener('focusin', function(e) {
       },
     });
 
-    editor = monaco.editor.create(document.getElementById('editor-container'), {
+            editor = monaco.editor.create(document.getElementById('editor-container'), {
       value: openTabs[0].content,
       language: 'cleo',
       theme: 'cleo-dark',
@@ -1348,15 +1829,24 @@ document.addEventListener('focusin', function(e) {
       automaticLayout: true,
       scrollBeyondLastLine: false,
       renderLineHighlight: 'all',
+      contextmenu: true, // ✨ Context menu enable karne ke liye
+      quickSuggestions: true,
       padding: { top: 12 },
     });
+
+
 
     let lintTimeout;
     editor.onDidChangeModelContent(() => {
       clearTimeout(lintTimeout);
       lintTimeout = setTimeout(() => {
-        const markers = validateCleoSyntax(editor.getValue());
-        monaco.editor.setModelMarkers(editor.getModel(), 'cleo-gui-linter', markers);
+        const useFrontendLinter = document.getElementById('frontend-linter-cb')?.checked;
+        if (useFrontendLinter) {
+          const markers = validateCleoSyntax(editor.getValue());
+          monaco.editor.setModelMarkers(editor.getModel(), 'cleo-gui-linter', markers);
+        } else {
+          monaco.editor.setModelMarkers(editor.getModel(), 'cleo-gui-linter', []);
+        }
       }, 300);
     });
 
@@ -1375,6 +1865,7 @@ document.addEventListener('focusin', function(e) {
     }
   });
 
+  // COMPILE SCRIPT WITH CONFIG & ERROR MODAL INTEGRATION
   const compileBtn = document.getElementById('compile-btn');
   const compileBtnText = document.getElementById('compile-btn-text');
   const compileSpinner = document.getElementById('compile-spinner');
@@ -1390,23 +1881,40 @@ document.addEventListener('focusin', function(e) {
     const noSplash = document.getElementById('no-splash-cb').checked;
     const customFlags = document.getElementById('custom-flags-input').value;
 
+    const compilerConfig = {
+      checkLocalVariables: document.getElementById('comp-checklocal').checked ? 1 : 0,
+      strictIfValidation: document.getElementById('comp-strictif').checked ? 1 : 0,
+      addExtraInfo: document.getElementById('comp-extrainfo').checked ? 1 : 0,
+      showImgWarning: document.getElementById('comp-imgwarning').checked ? 1 : 0,
+    };
+
     if (!code.trim()) {
       logLine('Editor is empty.', 'warn');
       return;
     }
 
-    const linterErrors = validateCleoSyntax(code);
-    if (linterErrors.length > 0) {
-      const firstErr = linterErrors[0];
-      logLine(`GUI Linter Error: Line ${firstErr.startLineNumber} — ${escapeHtml(firstErr.message)}`, 'error');
-      setEditorErrorMarker(firstErr.startLineNumber, firstErr.message);
-      return;
+    const useFrontendLinter = document.getElementById('frontend-linter-cb').checked;
+    if (useFrontendLinter) {
+      const linterErrors = validateCleoSyntax(code);
+      if (linterErrors.length > 0) {
+        const firstErr = linterErrors[0];
+        logLine(`GUI Linter Error: Line ${firstErr.startLineNumber} — ${escapeHtml(firstErr.message)}`, 'error');
+        setEditorErrorMarker(firstErr.startLineNumber, firstErr.message);
+        showErrorModal(`GUI Linter Error: Line ${firstErr.startLineNumber} — ${firstErr.message}`, 'Frontend Linter Validation');
+        return;
+      }
     }
 
     clearEditorErrorMarkers();
     compileBtn.disabled = true;
     compileSpinner.classList.remove('hidden');
-    compileBtnText.textContent = 'Compiling…';
+
+    let startTime = Date.now();
+    let timerInterval = setInterval(() => {
+      let seconds = ((Date.now() - startTime) / 1000).toFixed(1);
+      compileBtnText.textContent = `Compiling… (${seconds}s)`;
+    }, 100);
+
     logLine(`Sending script to compiler (${selectedGame})…`, 'info');
     logLine(`[Queue] Request sent to server queue, waiting for processing…`, 'warn');
 
@@ -1421,6 +1929,7 @@ document.addEventListener('focusin', function(e) {
           caseSensitive, 
           checkConditions, 
           noSplash, 
+          compilerConfig,
           customFlags, 
           customDbBase64: uploadedDbBase64 
         }),
@@ -1431,11 +1940,17 @@ document.addEventListener('focusin', function(e) {
 
       if (!response.ok || contentType.includes('application/json')) {
         const data = await response.json().catch(() => ({}));
+        const executedCmd = data.cmd || cmdHeader || 'No command generated';
+        
         if (data.cmd || cmdHeader) {
-          logLine(`Command: <span class="text-amber">${escapeHtml(data.cmd || cmdHeader)}</span>`, 'warn');
+          logLine(`Command: <span class="text-amber">${escapeHtml(executedCmd)}</span>`, 'warn');
         }
         const message = data.error || `Compilation failed (HTTP ${response.status}).`;
         logLine(escapeHtml(message), 'error');
+        
+        // ✨ Trigger Error Modal for Compilation Errors
+        showErrorModal(message, executedCmd,false);
+
         if (data.line && typeof data.line === 'number') {
           setEditorErrorMarker(data.line, message);
         }
@@ -1458,11 +1973,12 @@ document.addEventListener('focusin', function(e) {
       a.remove();
       window.URL.revokeObjectURL(url);
 
-      logLine(`Compilation succeeded — <span class="text-good">${filename}</span> downloaded.`, 'success');
-
+            let elapsedSeconds = ((Date.now() - startTime) / 1000).toFixed(1);
+      logLine(`Compilation succeeded in <span class="text-amber">${elapsedSeconds}s</span> — <span class="text-good">${filename}</span> downloaded.`, 'success');
+      
       const token = localStorage.getItem('gh_token');
       const repo = localStorage.getItem('gh_repo');
-      const autosave = localStorage.getItem('gh_autosave') === 'true'; // ✨ Fixed here
+      const autosave = localStorage.getItem('gh_autosave') === 'true';
 
       if (token && repo) {
         let shouldSave = autosave;
@@ -1481,7 +1997,9 @@ document.addEventListener('focusin', function(e) {
 
     } catch (err) {
       logLine(`Network error: ${escapeHtml(err.message)}`, 'error');
+      showErrorModal(err.message, 'Network / Request Failed');
     } finally {
+      clearInterval(timerInterval);
       compileBtn.disabled = false;
       compileSpinner.classList.add('hidden');
       compileBtnText.textContent = 'Compile & Download';
@@ -1505,6 +2023,8 @@ document.addEventListener('focusin', function(e) {
     div.textContent = str;
     return div.innerHTML;
   }
+  
+  
 </script>
 </body>
 </html>
