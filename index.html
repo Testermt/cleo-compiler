@@ -1967,7 +1967,14 @@ if (text.includes('Command:') || text.includes('Queue') || text.includes('[Compi
   const compileSpinner = document.getElementById('compile-spinner');
 
   compileBtn.addEventListener('click', async () => {
-    if (!editor) return;
+  if (typeof gtag === 'function') {
+        gtag('event', 'compile_download_click', {
+            'event_category': 'Button',
+            'event_label': document.getElementById('gameSelect').value
+        });
+    }
+
+  if (!editor) return;
     const code = editor.getValue();
     const activeTab = openTabs.find(t => t.id === activeTabId);
     const currentFilename = activeTab ? activeTab.name : 'script.txt';
