@@ -1968,9 +1968,9 @@ if (text.includes('Command:') || text.includes('Queue') || text.includes('[Compi
 
   compileBtn.addEventListener('click', async () => {
   if (typeof gtag === 'function') {
-        gtag('event', 'compile_download_click', {
+        gtag('event', 'game selected-click', {
             'event_category': 'Button',
-            'event_label': document.getElementById('gameSelect').value
+            'event_label': document.getElementById('compile-btn').value
         });
     }
 
