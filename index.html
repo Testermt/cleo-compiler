@@ -1,7 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<html lang="en">
 <head>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-8973LHLFH8"></script>
@@ -20,6 +18,15 @@ document.addEventListener('focusin', function(e) {
   gtag('js', new Date());
   gtag('config', 'G-8973LHLFH8');
 </script>
+
+<meta name="monetag" content="65e5b4aac69e090820df00cfcb581e25">
+
+ <!-- Smart Redirect for GitHub to Vercel -->
+    <script>
+        if (window.location.hostname.includes("github.io")) {
+            window.location.replace("https://cleo-compiler.vercel.app/");
+        }
+    </script>
 
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -1714,106 +1721,146 @@ if (text.includes('Command:') || text.includes('Queue') || text.includes('[Compi
   const decompileBtn = document.getElementById('decompile-btn');
   const decompileInput = document.getElementById('decompile-upload-input');
 
-  decompileBtn.addEventListener('click', () => decompileInput.click());
+  let decompileTimerInterval; // Decompile ke liye timer variable
+
+decompileBtn.addEventListener('click', () => decompileInput.click());
   
-  decompileInput.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
+decompileInput.addEventListener('change', async (e) => {
+  let startTime = Date.now(); // ✨ Yahan function ke shuru mein hi define kar diya
+  const file = e.target.files[0];
+
+  if (!file) return;
+
+  const selectedGame = document.getElementById('gameSelect').value;
+  const useSource = document.getElementById('use-source-cb').checked;
   
-    if (!file) return;
+  const codeOffsets = document.getElementById('code-offsets-cb')?.checked ? '1' : '0';
+  const ignoreUnknown = document.getElementById('ignore-unknown-cb')?.checked ? '1' : '0';
+  const varCounter = document.getElementById('var-counter-cb')?.checked ? '1' : '0';
+  const constantIndexes = document.getElementById('constant-indexes-cb')?.checked ? '1' : '0';
+  const skipScmHeader = document.getElementById('skip-scm-header-cb')?.checked ? '1' : '0';
+  const skipExtraInfo = document.getElementById('skip-extra-info-cb')?.checked ? '1' : '0';
+  const sb3Compat = document.getElementById('sb3-compat-cb')?.checked ? '1' : '0';
+  
+  const debugBits = `${codeOffsets}${ignoreUnknown}${varCounter}${constantIndexes}${skipScmHeader}${skipExtraInfo}${sb3Compat}`;
+  const customFlags = document.getElementById('custom-flags-input').value;
 
-    const selectedGame = document.getElementById('gameSelect').value;
-    const useSource = document.getElementById('use-source-cb').checked;
-    
-    const codeOffsets = document.getElementById('code-offsets-cb')?.checked ? '1' : '0';
-    const ignoreUnknown = document.getElementById('ignore-unknown-cb')?.checked ? '1' : '0';
-    const varCounter = document.getElementById('var-counter-cb')?.checked ? '1' : '0';
-    const constantIndexes = document.getElementById('constant-indexes-cb')?.checked ? '1' : '0';
-    const skipScmHeader = document.getElementById('skip-scm-header-cb')?.checked ? '1' : '0';
-    const skipExtraInfo = document.getElementById('skip-extra-info-cb')?.checked ? '1' : '0';
-    const sb3Compat = document.getElementById('sb3-compat-cb')?.checked ? '1' : '0';
-    
-    const debugBits = `${codeOffsets}${ignoreUnknown}${varCounter}${constantIndexes}${skipScmHeader}${skipExtraInfo}${sb3Compat}`;
-    const customFlags = document.getElementById('custom-flags-input').value;
+  const decompilerConfig = {
+    overwriteOutputFile: document.getElementById('opt-overwrite').checked ? 1 : 0,
+    useIfAndOr: document.getElementById('opt-useifandor').checked ? 1 : 0,
+    syntax: document.getElementById('opt-syntax').checked ? 1 : 0,
+    insertOriginalMissionNames: document.getElementById('opt-originalmissionnames').checked ? 1 : 0,
+    labelsFormat: document.getElementById('opt-labelsformat').checked ? 1 : 0,
+    customLabels: document.getElementById('opt-customlabels').checked ? 1 : 0,
+    customVariables: document.getElementById('opt-customvariables').checked ? 1 : 0,
+  };
 
-    const decompilerConfig = {
-      overwriteOutputFile: document.getElementById('opt-overwrite').checked ? 1 : 0,
-      useIfAndOr: document.getElementById('opt-useifandor').checked ? 1 : 0,
-      syntax: document.getElementById('opt-syntax').checked ? 1 : 0,
-      insertOriginalMissionNames: document.getElementById('opt-originalmissionnames').checked ? 1 : 0,
-      labelsFormat: document.getElementById('opt-labelsformat').checked ? 1 : 0,
-      customLabels: document.getElementById('opt-customlabels').checked ? 1 : 0,
-      customVariables: document.getElementById('opt-customvariables').checked ? 1 : 0,
-    };
+  logLine(`Reading file <span class="text-amber">${escapeHtml(file.name)}</span> for decompilation…`, 'info');
+  logLine(`[Queue] Request sent to server queue, waiting for processing…`, 'warn');
 
-    logLine(`Reading file <span class="text-amber">${escapeHtml(file.name)}</span> for decompilation…`, 'info');
-    logLine(`[Queue] Request sent to server queue, waiting for processing…`, 'warn');
+  // 🚀 DECOMPILE MODAL & LIVE TIMER START
+  const modal = document.getElementById('compileModal');
+  const statusText = document.getElementById('modalStatusText');
+  const cancelBtn = document.getElementById('cancelCompileBtn');
+  
+  if (modal) {
+    modal.style.display = 'flex';
+    if (cancelBtn) cancelBtn.style.display = 'none';
+  }
 
-    decompileBtn.disabled = true;
-    let startTime = Date.now();
-    let timerInterval = setInterval(() => {
-      let seconds = ((Date.now() - startTime) / 1000).toFixed(1);
-      decompileBtn.textContent = `Decompiling… (${seconds}s)`;
-    }, 100);
+  let secondsElapsed = 0;
+  if (statusText) {
+    statusText.innerHTML = `Decompiling code... Elapsed: <span id="timerCount">0</span>s`;
+  }
+  
+  clearInterval(decompileTimerInterval);
+  decompileTimerInterval = setInterval(() => {
+    secondsElapsed++;
+    const timerElem = document.getElementById('timerCount');
+    if (timerElem) timerElem.innerText = secondsElapsed;
+  }, 1000);
 
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const base64Data = event.target.result.split(',')[1] || event.target.result;
-      try {
-        const response = await fetch(`${API_BASE}/api/decompile`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            fileBase64: base64Data, 
-            filename: file.name,
-            game: selectedGame,
-            useSource,
-            debugBits,
-            decompilerConfig,
-            customFlags
-          }),
-        });
-        const data = await response.json();
-        const executedCmd = data.cmd || 'No command generated';
-        
-        if (data.cmd) {
-          logLine(`Command: <span class="text-amber">${escapeHtml(data.cmd)}</span>`, 'warn');
-        }
-        if (!response.ok || !data.success) {
-          const errorMsg = data.error || 'Unknown decompilation error.';
-         // logLine(`Decompilation failed: ${escapeHtml(errorMsg)}`, 'error');
-          // ✨ Trigger Error Modal for Decompilation Errors / Timeouts
-          showErrorModal(errorMsg, executedCmd, true);
-          return;
-        }
-                if (editor && data.code) {
-          clearEditorErrorMarkers();
-          
-          // ✨ Purane tab ka content save karke ek naya tab banao decompile file ke liye
-          const currentTab = openTabs.find(t => t.id === activeTabId);
-          if (currentTab) currentTab.content = editor.getValue();
+  decompileBtn.disabled = true;
+  let timerInterval = setInterval(() => {
+    let seconds = ((Date.now() - startTime) / 1000).toFixed(1);
+    decompileBtn.textContent = `Decompiling… (${seconds}s)`;
+  }, 100);
 
-          const newId = 'tab-' + Date.now();
-          const newName = file.name.replace(/\.(cs|csa|csi)$/i, '.txt');
-          
-          openTabs.push({ id: newId, name: newName, content: data.code });
-          switchTab(newId);
-
-          let elapsedSeconds = ((Date.now() - startTime) / 1000).toFixed(1);
-          logLine(`Successfully decompiled <span class="text-good">${escapeHtml(file.name)}</span> in <span class="text-amber">${elapsedSeconds}s</span>!`, 'success');
-        }
-
-      } catch (err) {
-        logLine(`Error: ${escapeHtml(err.message)}`, 'error');
-        showErrorModal(err.message, 'Network / Request Failed');
-      } finally {
-        clearInterval(timerInterval);
-        decompileBtn.disabled = false;
-        decompileBtn.textContent = 'Decompile';
-        decompileInput.value = '';
+  const reader = new FileReader();
+  reader.onload = async (event) => {
+    const base64Data = event.target.result.split(',')[1] || event.target.result;
+    try {
+      const response = await fetch(`${API_BASE}/api/decompile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          fileBase64: base64Data, 
+          filename: file.name,
+          game: selectedGame,
+          useSource,
+          debugBits,
+          decompilerConfig,
+          customFlags
+        }),
+      });
+      const data = await response.json();
+      const executedCmd = data.cmd || 'No command generated';
+      
+      if (data.cmd) {
+        logLine(`Command: <span class="text-amber">${escapeHtml(data.cmd)}</span>`, 'warn');
       }
-    };
-    reader.readAsDataURL(file);
-  });
+
+      if (!response.ok || !data.success) {
+        clearInterval(decompileTimerInterval);
+        if (modal) modal.style.display = 'none';
+
+        const errorMsg = data.error || 'Unknown decompilation error.';
+        showErrorModal(errorMsg, executedCmd, true);
+        return;
+      }
+
+      // 🚀 SUCCESS: TIMER STOP & MODAL CLOSE
+      clearInterval(decompileTimerInterval);
+
+      if (editor && data.code) {
+        clearEditorErrorMarkers();
+        
+        const currentTab = openTabs.find(t => t.id === activeTabId);
+        if (currentTab) currentTab.content = editor.getValue();
+
+        const newId = 'tab-' + Date.now();
+        const newName = file.name.replace(/\.(cs|csa|csi)$/i, '.txt');
+        
+        openTabs.push({ id: newId, name: newName, content: data.code });
+        switchTab(newId);
+
+        if (statusText) {
+          statusText.innerText = `Done in ${secondsElapsed}s! Opening file...`;
+        }
+        setTimeout(() => {
+          if (modal) modal.style.display = 'none';
+        }, 800);
+
+        let elapsedSeconds = ((Date.now() - startTime) / 1000).toFixed(1);
+        logLine(`Successfully decompiled <span class="text-good">${escapeHtml(file.name)}</span> in <span class="text-amber">${elapsedSeconds}s</span>!`, 'success');
+      }
+
+    } catch (err) {
+      clearInterval(decompileTimerInterval);
+      if (modal) modal.style.display = 'none';
+      logLine(`Error: ${escapeHtml(err.message)}`, 'error');
+      showErrorModal(err.message, 'Network / Request Failed');
+    } finally {
+      clearInterval(timerInterval);
+      clearInterval(decompileTimerInterval);
+      decompileBtn.disabled = false;
+      decompileBtn.textContent = 'Decompile';
+      decompileInput.value = '';
+    }
+  };
+  reader.readAsDataURL(file);
+});
+
 
   function validateCleoSyntax(code) {
     if (!editor || !window.monaco) return [];
@@ -1997,148 +2044,190 @@ if (text.includes('Command:') || text.includes('Queue') || text.includes('[Compi
   const compileBtnText = document.getElementById('compile-btn-text');
   const compileSpinner = document.getElementById('compile-spinner');
 
-  compileBtn.addEventListener('click', async () => {
+  let compileTimerInterval; // Timer variable globally define kiya hai
+
+compileBtn.addEventListener('click', async () => {
+  let startTime = Date.now(); // ✨ Yahan compile ke start mein define kar diya
+
+  if (typeof gtag === 'function') {
+    gtag('event', 'game selected-click', {
+        'event_category': 'Button',
+        'event_label': document.getElementById('compile-spinner').value
+    });
+  }
   
-if (typeof gtag === 'function') {
-        gtag('event', 'game selected-click', {
-            'event_category': 'Button',
-            'event_label': document.getElementById('compile-spinner').value
-        });
-    }
   if (!editor) return;
-    const code = editor.getValue();
-    const activeTab = openTabs.find(t => t.id === activeTabId);
-    const currentFilename = activeTab ? activeTab.name : 'script.txt';
-    const selectedGame = document.getElementById('gameSelect').value;
-    const caseSensitive = document.getElementById('case-sensitive-cb').checked;
-    const checkConditions = document.getElementById('check-conditions-cb').checked;
-    const noSplash = document.getElementById('no-splash-cb').checked;
-    const customFlags = document.getElementById('custom-flags-input').value;
+  const code = editor.getValue();
+  const activeTab = openTabs.find(t => t.id === activeTabId);
+  const currentFilename = activeTab ? activeTab.name : 'script.txt';
+  const selectedGame = document.getElementById('gameSelect').value;
+  const caseSensitive = document.getElementById('case-sensitive-cb').checked;
+  const checkConditions = document.getElementById('check-conditions-cb').checked;
+  const noSplash = document.getElementById('no-splash-cb').checked;
+  const customFlags = document.getElementById('custom-flags-input').value;
 
-    const compilerConfig = {
-      checkLocalVariables: document.getElementById('comp-checklocal').checked ? 1 : 0,
-      strictIfValidation: document.getElementById('comp-strictif').checked ? 1 : 0,
-      addExtraInfo: document.getElementById('comp-extrainfo').checked ? 1 : 0,
-      showImgWarning: document.getElementById('comp-imgwarning').checked ? 1 : 0,
-    };
+  const compilerConfig = {
+    checkLocalVariables: document.getElementById('comp-checklocal').checked ? 1 : 0,
+    strictIfValidation: document.getElementById('comp-strictif').checked ? 1 : 0,
+    addExtraInfo: document.getElementById('comp-extrainfo').checked ? 1 : 0,
+    showImgWarning: document.getElementById('comp-imgwarning').checked ? 1 : 0,
+  };
 
-    if (!code.trim()) {
-      logLine('Editor is empty.', 'warn');
+  if (!code.trim()) {
+    logLine('Editor is empty.', 'warn');
+    return;
+  }
+
+  const useFrontendLinter = document.getElementById('frontend-linter-cb').checked;
+  if (useFrontendLinter) {
+    const linterErrors = validateCleoSyntax(code);
+    if (linterErrors.length > 0) {
+      const firstErr = linterErrors[0];
+      logLine(`GUI Linter Error: Line ${firstErr.startLineNumber} — ${escapeHtml(firstErr.message)}`, 'error');
+      setEditorErrorMarker(firstErr.startLineNumber, firstErr.message);
+      showErrorModal(`GUI Linter Error: Line ${firstErr.startLineNumber} — ${firstErr.message}`, 'Frontend Linter Validation');
+      return;
+    }
+  }
+
+  clearEditorErrorMarkers();
+
+  // 🚀 COMPILE MODAL & LIVE TIMER START
+  const modal = document.getElementById('compileModal');
+  const statusText = document.getElementById('modalStatusText');
+  const cancelBtn = document.getElementById('cancelCompileBtn');
+  
+  if (modal) {
+    modal.style.display = 'flex';
+    if (cancelBtn) cancelBtn.style.display = 'none';
+  }
+
+  let secondsElapsed = 0;
+  if (statusText) {
+    statusText.innerHTML = `Compiling code... Elapsed: <span id="timerCount">0</span>s`;
+  }
+  
+  clearInterval(compileTimerInterval);
+  compileTimerInterval = setInterval(() => {
+    secondsElapsed++;
+    const timerElem = document.getElementById('timerCount');
+    if (timerElem) timerElem.innerText = secondsElapsed;
+  }, 1000);
+
+  compileBtn.disabled = true;
+  compileSpinner.classList.remove('hidden');
+
+  logLine(`Sending script to compiler (${selectedGame})…`, 'info');
+  logLine(`[Queue] Request sent to server queue, waiting for processing…`, 'warn');
+
+  try {
+    const response = await fetch(`${API_BASE}/api/compile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        code, 
+        filename: currentFilename, 
+        game: selectedGame, 
+        caseSensitive, 
+        checkConditions, 
+        noSplash, 
+        compilerConfig,
+        customFlags, 
+        customDbBase64: uploadedDbBase64 
+      }),
+    });
+
+    const contentType = response.headers.get('content-type') || '';
+    const cmdHeader = response.headers.get('x-compiler-cmd');
+
+    if (!response.ok || contentType.includes('application/json')) {
+      clearInterval(compileTimerInterval);
+      if (modal) modal.style.display = 'none';
+
+      const data = await response.json().catch(() => ({}));
+      const executedCmd = data.cmd || cmdHeader || 'No command generated';
+      
+      if (data.cmd || cmdHeader) {
+        logLine(`Command: <span class="text-amber">${escapeHtml(executedCmd)}</span>`, 'warn');
+      }
+      const message = data.error || `Compilation failed (HTTP ${response.status}).`;
+      logLine(escapeHtml(message), 'error');
+      
+      showErrorModal(message, executedCmd, false);
+
+      if (data.line && typeof data.line === 'number') {
+        setEditorErrorMarker(data.line, message);
+      }
       return;
     }
 
-    const useFrontendLinter = document.getElementById('frontend-linter-cb').checked;
-    if (useFrontendLinter) {
-      const linterErrors = validateCleoSyntax(code);
-      if (linterErrors.length > 0) {
-        const firstErr = linterErrors[0];
-        logLine(`GUI Linter Error: Line ${firstErr.startLineNumber} — ${escapeHtml(firstErr.message)}`, 'error');
-        setEditorErrorMarker(firstErr.startLineNumber, firstErr.message);
-        showErrorModal(`GUI Linter Error: Line ${firstErr.startLineNumber} — ${firstErr.message}`, 'Frontend Linter Validation');
-        return;
+    // 🚀 SUCCESS: TIMER STOP & MODAL CLOSE WITH DOWNLOAD
+    clearInterval(compileTimerInterval);
+
+    if (cmdHeader) {
+      logLine(`Command: <span class="text-amber">${escapeHtml(cmdHeader)}</span>`, 'warn');
+    }
+
+    let filename = response.headers.get('x-download-filename') || currentFilename.replace(/\.txt$/i, '.cs');
+    const blob = await response.blob();
+    
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+
+    if (statusText) {
+      statusText.innerText = `Done in ${secondsElapsed}s! Downloading...`;
+    }
+    setTimeout(() => {
+      if (modal) modal.style.display = 'none';
+    }, 1000);
+
+    let elapsedSeconds = ((Date.now() - startTime) / 1000).toFixed(1);
+    logLine(`Compilation succeeded in <span class="text-amber">${elapsedSeconds}s</span> — <span class="text-good">${filename}</span> downloaded.`, 'success');
+    
+    const token = localStorage.getItem('gh_token');
+    const repo = localStorage.getItem('gh_repo');
+    const autosave = localStorage.getItem('gh_autosave') === 'true';
+
+    if (token && repo) {
+      let shouldSave = autosave;
+      if (!autosave) {
+        shouldSave = confirm("Auto-save is off. Do you want to save this compiled output to GitHub?");
+      }
+      if (shouldSave) {
+        const reader = new FileReader();
+        reader.onload = function() {
+          const base64Data = reader.result.split(',')[1] || reader.result;
+          commitToGitHub(base64Data, filename, true, false);
+        };
+        reader.readAsDataURL(blob);
       }
     }
 
-    clearEditorErrorMarkers();
-    compileBtn.disabled = true;
-    compileSpinner.classList.remove('hidden');
+  } catch (err) {
+    clearInterval(compileTimerInterval);
+    if (modal) modal.style.display = 'none';
+    logLine(`Network error: ${escapeHtml(err.message)}`, 'error');
+    showErrorModal(err.message, 'Network / Request Failed');
+  } finally {
+    clearInterval(compileTimerInterval);
+    compileBtn.disabled = false;
+    compileSpinner.classList.add('hidden');
+    compileBtnText.textContent = 'Compile & Download';
+  }
+});
 
-    let startTime = Date.now();
-    let timerInterval = setInterval(() => {
-      let seconds = ((Date.now() - startTime) / 1000).toFixed(1);
-      compileBtnText.textContent = `Compiling… (${seconds}s)`;
-    }, 100);
 
-    logLine(`Sending script to compiler (${selectedGame})…`, 'info');
-    logLine(`[Queue] Request sent to server queue, waiting for processing…`, 'warn');
-
-    try {
-      const response = await fetch(`${API_BASE}/api/compile`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          code, 
-          filename: currentFilename, 
-          game: selectedGame, 
-          caseSensitive, 
-          checkConditions, 
-          noSplash, 
-          compilerConfig,
-          customFlags, 
-          customDbBase64: uploadedDbBase64 
-        }),
-      });
-
-      const contentType = response.headers.get('content-type') || '';
-      const cmdHeader = response.headers.get('x-compiler-cmd');
-
-      if (!response.ok || contentType.includes('application/json')) {
-        const data = await response.json().catch(() => ({}));
-        const executedCmd = data.cmd || cmdHeader || 'No command generated';
-        
-        if (data.cmd || cmdHeader) {
-          logLine(`Command: <span class="text-amber">${escapeHtml(executedCmd)}</span>`, 'warn');
-        }
-        const message = data.error || `Compilation failed (HTTP ${response.status}).`;
-        logLine(escapeHtml(message), 'error');
-        
-        // ✨ Trigger Error Modal for Compilation Errors
-        showErrorModal(message, executedCmd,false);
-
-        if (data.line && typeof data.line === 'number') {
-          setEditorErrorMarker(data.line, message);
-        }
-        return;
-      }
-
-      if (cmdHeader) {
-        logLine(`Command: <span class="text-amber">${escapeHtml(cmdHeader)}</span>`, 'warn');
-      }
-
-      let filename = response.headers.get('x-download-filename') || currentFilename.replace(/\.txt$/i, '.cs');
-      const blob = await response.blob();
-      
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-
-            let elapsedSeconds = ((Date.now() - startTime) / 1000).toFixed(1);
-      logLine(`Compilation succeeded in <span class="text-amber">${elapsedSeconds}s</span> — <span class="text-good">${filename}</span> downloaded.`, 'success');
-      
-      const token = localStorage.getItem('gh_token');
-      const repo = localStorage.getItem('gh_repo');
-      const autosave = localStorage.getItem('gh_autosave') === 'true';
-
-      if (token && repo) {
-        let shouldSave = autosave;
-        if (!autosave) {
-          shouldSave = confirm("Auto-save is off. Do you want to save this compiled output to GitHub?");
-        }
-        if (shouldSave) {
-          const reader = new FileReader();
-          reader.onload = function() {
-            const base64Data = reader.result.split(',')[1] || reader.result;
-            commitToGitHub(base64Data, filename, true, false);
-          };
-          reader.readAsDataURL(blob);
-        }
-      }
-
-    } catch (err) {
-      logLine(`Network error: ${escapeHtml(err.message)}`, 'error');
-      showErrorModal(err.message, 'Network / Request Failed');
-    } finally {
-      clearInterval(timerInterval);
-      compileBtn.disabled = false;
-      compileSpinner.classList.add('hidden');
-      compileBtnText.textContent = 'Compile & Download';
-    }
-  });
+// Modal close helper function agar defined na ho
+function closeCompileModal() {
+  clearInterval(compileTimerInterval);
+  document.getElementById('compileModal').style.display = 'none';
+}
 
   document.getElementById('clear-btn').addEventListener('click', () => {
     if (editor) {
@@ -2400,5 +2489,56 @@ if (saveModelBtn) {
 }
 
 </script>
+
+
+
+
+<!-- Compile Loading & Ad Modal Overlay -->
+<div id="compileModal" class="modal-overlay" style="display: none;">
+  <div class="modal-content" style="max-width: 440px; width: 95%;">
+    <div class="spinner"></div>
+    <h3>Compiling Your Script...</h3>
+    <p id="modalStatusText">Preparing compiler... (<span id="timerCount">0</span>s)</p>
+    
+    <!-- Ad Container (Bada size) -->
+    <div class="ad-container" style="margin: 15px 0; padding: 12px; background: #1f1f1f; border-radius: 8px; border: 1px solid #333; text-align: center; max-height: 400px; overflow-y: auto; overflow-x: hidden;">
+      <p style="font-size: 10px; color: #e8a33d; margin-bottom: 6px; font-weight: bold; letter-spacing: 1px;">ADVERTISEMENT</p>
+      
+      <div id="adSlot" style="color: #fff;">
+        <!-- Adsterra Live Site Code -->
+        <script async="async" data-cfasync="false" src="https://pl30936393.effectivecpmnetwork.com/1abe7451347701fb90de9fb0d2a98169/invoke.js"></script>
+        <div id="container-1abe7451347701fb90de9fb0d2a98169"></div>
+      </div>
+    </div>
+    
+    <button id="cancelCompileBtn" onclick="closeCompileModal()" style="display: none; padding: 8px 16px; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 5px;">Close</button>
+  </div>
+</div>
+
+
+
+
+
+
+<style>
+.modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.85); display: flex; justify-content: center; align-items: center; z-index: 9999;
+}
+.modal-content {
+  background: #1a1a1a; padding: 25px; border-radius: 12px; text-align: center; max-width: 380px; width: 90%; color: #fff;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.6); border: 1px solid #333;
+}
+.spinner {
+  border: 4px solid #333; border-top: 4px solid #3498db; border-radius: 50%; width: 35px; height: 35px;
+  animation: spin 1s linear infinite; margin: 0 auto 12px auto;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+</style>
+
+
 </body>
+
+
+
 </html>
