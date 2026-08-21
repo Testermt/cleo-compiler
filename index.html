@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- Google tag (gtag.js) -->
+
+ <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-8973LHLFH8"></script>
 <script>
 document.addEventListener('focusin', function(e) {
@@ -27,7 +28,7 @@ document.addEventListener('focusin', function(e) {
             window.location.replace("https://cleo-compiler.vercel.app/");
         }
     </script>
-
+    
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>GTA SA Online CLEO Compiler</title>
@@ -556,21 +557,151 @@ document.addEventListener('focusin', function(e) {
 </div>
 
 
+<div id="customize-game-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+  <div class="bg-panel border border-hairline rounded-sm max-w-md w-full p-4 flex flex-col gap-3.5 shadow-2xl">
+    <div class="flex items-center justify-between border-b border-hairline pb-2.5">
+      <h2 class="font-display text-xs sm:text-sm text-amber font-semibold">⚙️ Customize Game Profile</h2>
+      <button id="cust-modal-close" class="text-gray-500 hover:text-gray-200 text-lg leading-none">&times;</button>
+    </div>
+    <div class="flex flex-col gap-2.5 text-[11.5px]">
+      <div>
+        <label class="block text-gray-400 mb-1">Profile Name:</label>
+        <input type="text" id="cust-profile-name" placeholder="e.g. My Custom GTA Mod" class="bg-panel2 text-gray-200 border border-hairline rounded-sm px-2.5 py-2 w-full focus:outline-none focus:border-amber font-mono text-xs" />
+      </div>
+      <div>
+        <label class="block text-gray-400 mb-1">Target Sanny Data Folder Name (e.g. sa, sa_mobile):</label>
+        <input type="text" id="cust-folder-name" placeholder="sa" class="bg-panel2 text-gray-200 border border-hairline rounded-sm px-2.5 py-2 w-full focus:outline-none focus:border-amber font-mono text-xs" />
+      </div>
+    </div>
+    <div class="flex justify-end gap-2 pt-2 border-t border-hairline">
+      <button id="cust-modal-cancel" class="px-3 py-1.5 text-gray-400 text-[11px]">Cancel</button>
+      <button id="cust-modal-save" class="btn-press text-[11px] px-3.5 py-1.5 bg-amber text-ink font-semibold rounded-sm hover:opacity-90">Save Profile</button>
+    </div>
+  </div>
+</div>
+
+
+
     <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-between gap-2.5 bg-panel p-2.5 sm:p-3 rounded-sm border border-hairline">
       <div class="flex flex-wrap items-center gap-2 text-[11.5px] text-gray-400">
         <div class="flex items-center gap-1.5 flex-1 sm:flex-initial">
           <span class="hex-addr text-gray-500 text-[10px]">GAME</span>
-          <select id="gameSelect" class="bg-panel2 text-gray-200 border border-hairline rounded-sm px-2 py-1 text-[11.5px] focus:outline-none focus:border-amber w-full sm:w-auto">
-            <option value="sa" selected>GTA SA (PC - .cs)</option>
-            <option value="sa_mobile_csa">GTA SA (Mobile - .csa)</option>
-            <option value="sa_mobile_csi">GTA SA (Mobile - .csi)</option>
-            <option value="vc">GTA VC (PC - .cs)</option>
-            <option value="vc_mobile_csa">GTA VC (Mobile - .csa)</option>
-            <option value="vc_mobile_csi">GTA VC (Mobile - .csi)</option>
-            <option value="gta3">GTA III (PC - .cs)</option>
-            <option value="gta3_mobile_csa">GTA III (Mobile - .csa)</option>
-            <option value="gta3_mobile_csi">GTA III (Mobile - .csi)</option>
-          </select>
+          
+<!-- Trigger Button (Header toolbar) -->
+<button id="game-select-trigger" type="button" class="btn-press text-[11.5px] px-3 py-1.5 rounded-sm border border-hairline bg-panel2 text-gray-200 hover:border-amber/50 transition-colors flex items-center gap-2">
+  <span class="text-amber">🎮</span>
+  <span id="current-selected-game-label">GTA SA Mobile (.csa / .csi)</span>
+</button>
+
+<!-- Hidden native select with sa_mobile as default -->
+<select id="gameSelect" class="hidden">
+  <option value="sa">GTA SA v1.0</option>
+  <option value="sa_v2">GTA SA v2.0</option>
+  <option value="sa_ps2">GTA SA PS2 v1.0</option>
+  <option value="sa_mobile" selected>GTA SA Mobile</option>
+  <option value="vc">GTA VC</option>
+  <option value="vc_mobile">GTA VC Mobile</option>
+  <option value="gta3">GTA III</option>
+  <option value="gta3_mobile">GTA III Mobile</option>
+  <option value="lcs">GTA LCS</option>
+  <option value="lcs_mobile">GTA LCS Mobile</option>
+  <option value="vcs_ps2">GTA VCS PS2</option>
+  <option value="vcs_psp">GTA VCS PSP</option>
+</select>
+
+<!-- Modal Pop-up -->
+<div id="game-selection-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+  <div class="bg-panel border border-hairline rounded-sm max-w-md w-full max-h-[85vh] flex flex-col shadow-2xl">
+    
+    <!-- Modal Header -->
+    <div class="border-b border-hairline px-4 py-3 flex items-center justify-between">
+      <h2 class="font-display text-sm text-amber font-semibold">🎮 Select Target Game Profile</h2>
+      <button id="game-modal-close" class="text-gray-500 hover:text-gray-200 text-lg leading-none">&times;</button>
+    </div>
+
+    <!-- Modal Options List -->
+    <div class="overflow-y-auto px-4 py-3 text-[11.5px] flex flex-col gap-3 text-gray-300">
+      
+      <!-- GTA San Andreas Section -->
+      <div class="text-amber font-bold text-xs pt-1">GTA San Andreas</div>
+      <label class="game-radio-item flex items-center justify-between p-2 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline border border-hairline">
+        <span>GTA SA v1.0 (PC - .cs)</span>
+        <input type="radio" name="game_profile_radio" value="sa" class="accent-amber w-4 h-4" />
+      </label>
+      <label class="game-radio-item flex items-center justify-between p-2 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline border border-hairline">
+        <span>GTA SA v2.0 (PC - .cs)</span>
+        <input type="radio" name="game_profile_radio" value="sa_v2" class="accent-amber w-4 h-4" />
+      </label>
+      <label class="game-radio-item flex items-center justify-between p-2 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline border border-hairline">
+        <span>GTA SA PS2 v1.0 (Console - .cs)</span>
+        <input type="radio" name="game_profile_radio" value="sa_ps2" class="accent-amber w-4 h-4" />
+      </label>
+      <label class="game-radio-item flex items-center justify-between p-2 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline border border-hairline">
+        <span>GTA SA Mobile (.csa / .csi)</span>
+        <!-- ✨ Default checked here -->
+        <input type="radio" name="game_profile_radio" value="sa_mobile" class="accent-amber w-4 h-4" checked />
+      </label>
+
+      <!-- GTA Vice City Section -->
+      <div class="text-amber font-bold text-xs pt-2">GTA Vice City</div>
+      <label class="game-radio-item flex items-center justify-between p-2 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline border border-hairline">
+        <span>GTA VC (PC - .cs)</span>
+        <input type="radio" name="game_profile_radio" value="vc" class="accent-amber w-4 h-4" />
+      </label>
+      <label class="game-radio-item flex items-center justify-between p-2 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline border border-hairline">
+        <span>GTA VC Mobile (.csa / .csi)</span>
+        <input type="radio" name="game_profile_radio" value="vc_mobile" class="accent-amber w-4 h-4" />
+      </label>
+
+      <!-- GTA III Section -->
+      <div class="text-amber font-bold text-xs pt-2">GTA III</div>
+      <label class="game-radio-item flex items-center justify-between p-2 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline border border-hairline">
+        <span>GTA III (PC - .cs)</span>
+        <input type="radio" name="game_profile_radio" value="gta3" class="accent-amber w-4 h-4" />
+      </label>
+      <label class="game-radio-item flex items-center justify-between p-2 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline border border-hairline">
+        <span>GTA III Mobile (.csa / .csi)</span>
+        <input type="radio" name="game_profile_radio" value="gta3_mobile" class="accent-amber w-4 h-4" />
+      </label>
+
+      <!-- Stories Series Section -->
+      <div class="text-amber font-bold text-xs pt-2">GTA Stories Series</div>
+      <label class="game-radio-item flex items-center justify-between p-2 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline border border-hairline">
+        <span>GTA LCS (PSP - .cs)</span>
+        <input type="radio" name="game_profile_radio" value="lcs" class="accent-amber w-4 h-4" />
+      </label>
+      <label class="game-radio-item flex items-center justify-between p-2 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline border border-hairline">
+        <span>GTA LCS Mobile (.csa / .csi)</span>
+        <input type="radio" name="game_profile_radio" value="lcs_mobile" class="accent-amber w-4 h-4" />
+      </label>
+      <label class="game-radio-item flex items-center justify-between p-2 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline border border-hairline">
+        <span>GTA VCS (PS2 - .cs)</span>
+        <input type="radio" name="game_profile_radio" value="vcs_ps2" class="accent-amber w-4 h-4" />
+      </label>
+      <label class="game-radio-item flex items-center justify-between p-2 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline border border-hairline">
+        <span>GTA VCS (PSP - .cs)</span>
+        <input type="radio" name="game_profile_radio" value="vcs_psp" class="accent-amber w-4 h-4" />
+      </label>
+
+      <!-- Custom Profile Option -->
+      <div class="text-teal font-bold text-xs pt-2">Custom Configuration</div>
+      <label class="game-radio-item flex items-center justify-between p-2 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline border border-hairline">
+        <span class="text-teal font-semibold">⚙️ Customize Profile...</span>
+        <input type="radio" name="game_profile_radio" value="custom_profile" class="accent-teal w-4 h-4" />
+      </label>
+
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="flex justify-end gap-2 p-3 border-t border-hairline bg-panel2">
+      <button id="game-modal-save" class="btn-press text-[11.5px] px-4 py-1.5 bg-amber text-ink font-semibold rounded-sm hover:opacity-90">Apply Game Profile</button>
+    </div>
+
+  </div>
+</div>
+
+
+
         </div>
         <div class="flex items-center gap-1.5 flex-1 sm:flex-initial">
           <label for="templateSelect" class="hex-addr text-gray-500 text-[10px]">TEMPLATE</label>
@@ -698,6 +829,11 @@ document.addEventListener('focusin', function(e) {
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.49.0/min/vs/loader.min.js"></script>
 <script>
+
+
+
+
+
   const API_BASE = window.CLEO_API_BASE || 'https://cleo-compiler-backend.onrender.com';
   
   const REGISTRY_GIST_ID = "42183afd8d5722544524b1fc6f68ec3a";
@@ -706,12 +842,107 @@ document.addEventListener('focusin', function(e) {
   const DEFAULT_TABS = [
     { id: 'tab-1', name: 'script.txt', content: `{$CLEO .cs}\n\n0000: NOP\n03A4: name_thread 'MAIN'\n\n:MAIN_START\nwait 0\nif\n  0256:   player $PLAYER_CHAR defined\njf @MAIN_START\n\n0001: wait 0\n0417: start_mission 1\n\n:MAIN_LOOP\nwait 250\njump @MAIN_LOOP\n` }
   ];
+  
+  
+  const triggerBtn = document.getElementById('game-select-trigger');
+const gameModal = document.getElementById('game-selection-modal');
+const modalClose = document.getElementById('game-modal-close');
+const modalSave = document.getElementById('game-modal-save');
+const currentLabel = document.getElementById('current-selected-game-label');
+const hiddenSelect = document.getElementById('gameSelect');
+
+// Trigger button click to open modal
+triggerBtn.addEventListener('click', () => {
+  gameModal.classList.remove('hidden');
+});
+
+// Close modal
+modalClose.addEventListener('click', () => {
+  gameModal.classList.add('hidden');
+});
+
+// Save / Apply selection
+modalSave.addEventListener('click', () => {
+  const selectedRadio = document.querySelector('input[name="game_profile_radio"]:checked');
+  if (selectedRadio) {
+    const val = selectedRadio.value;
+    
+    if (val === 'custom_profile') {
+      gameModal.classList.add('hidden');
+      const custModal = document.getElementById('customize-game-modal');
+      if (custModal) custModal.classList.remove('hidden');
+      return;
+    }
+
+    const parentLabel = selectedRadio.closest('label');
+    const text = parentLabel.querySelector('span').textContent;
+
+    // Update hidden select value for backend compilation/decompilation
+    hiddenSelect.value = val;
+    currentLabel.textContent = text;
+
+    gameModal.classList.add('hidden');
+    logLine(`Selected game profile: <span class="text-amber">${text}</span>`, 'info');
+  }
+});
+
+// Close modal on background click
+window.addEventListener('click', (e) => {
+  if (e.target === gameModal) {
+    gameModal.classList.add('hidden');
+  }
+});
+
+  
+  
+  
+  const gameSelectEl = document.getElementById('gameSelect');
+const custModal = document.getElementById('customize-game-modal');
+
+gameSelectEl.addEventListener('change', (e) => {
+  if (e.target.value === 'custom_profile') {
+    custModal.classList.remove('hidden');
+  }
+});
+
+document.getElementById('cust-modal-close').addEventListener('click', () => {
+  custModal.classList.add('hidden');
+  gameSelectEl.value = 'sa'; // Fallback
+});
+
+document.getElementById('cust-modal-cancel').addEventListener('click', () => {
+  custModal.classList.add('hidden');
+  gameSelectEl.value = 'sa';
+});
+
+document.getElementById('cust-modal-save').addEventListener('click', () => {
+  const pName = document.getElementById('cust-profile-name').value.trim();
+  const fName = document.getElementById('cust-folder-name').value.trim();
+
+  if (!pName || !fName) {
+    alert('Please fill in both fields!');
+    return;
+  }
+
+  // Dropdown mein naya dynamic custom option insert kar do
+  const customOpt = document.createElement('option');
+  customOpt.value = `custom_${fName}`;
+  customOpt.textContent = pName;
+  customOpt.selected = true;
+  gameSelectEl.appendChild(customOpt);
+
+  custModal.classList.add('hidden');
+  logLine(`Custom game profile '<span class="text-amber">${escapeHtml(pName)}</span>' added successfully.`, 'success');
+});
+
 
   function isValidTabsArray(arr) {
     return Array.isArray(arr) && arr.length > 0 && arr.every(t =>
       t && typeof t.id === 'string' && typeof t.name === 'string' && typeof t.content === 'string'
     );
   }
+
+
 
   function loadInitialTabs() {
     try {
@@ -1719,8 +1950,8 @@ window.addEventListener('beforeunload', () => {
               const consoleLog = document.getElementById('console-log');
   function logLine(text, type = 'info') {
     // 🛑 Sirf [Compilation Error] aur [Decompilation Error] wale duplicate prefix ko hatao, baaki 'error:' wale logs console par dikhenge!
-//if (text.includes('Queue') || text.includes('[Compilation Error]') || text.includes('[Decompilation Error]')) return;
-if (text.includes('Command:') || text.includes('Queue') || text.includes('[Compilation Error]') || text.includes('[Decompilation Error]')) return;
+if (text.includes('Queue') || text.includes('[Compilation Error]') || text.includes('[Decompilation Error]')) return;
+//if (text.includes('Command:') || text.includes('Queue') || text.includes('[Compilation Error]') || text.includes('[Decompilation Error]')) return;
 
     const colors = { success: 'text-good', error: 'text-bad', warn: 'text-amber', info: 'text-gray-400' };
     const line = document.createElement('div');
