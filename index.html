@@ -19,7 +19,7 @@ document.addEventListener('focusin', function(e) {
   gtag('config', 'G-8973LHLFH8');
 </script>
 
-<meta name="monetag" content="65e5b4aac69e090820df00cfcb581e25">
+
 
  <!-- Smart Redirect for GitHub to Vercel -->
     <script>
@@ -702,11 +702,67 @@ document.addEventListener('focusin', function(e) {
   
   const REGISTRY_GIST_ID = "42183afd8d5722544524b1fc6f68ec3a";
 
-  let openTabs = [
+  // LocalStorage se save kiye hue tabs load karo, agar na ho ya corrupt ho toh default rakho
+  const DEFAULT_TABS = [
     { id: 'tab-1', name: 'script.txt', content: `{$CLEO .cs}\n\n0000: NOP\n03A4: name_thread 'MAIN'\n\n:MAIN_START\nwait 0\nif\n  0256:   player $PLAYER_CHAR defined\njf @MAIN_START\n\n0001: wait 0\n0417: start_mission 1\n\n:MAIN_LOOP\nwait 250\njump @MAIN_LOOP\n` }
   ];
-  let activeTabId = 'tab-1';
+
+  function isValidTabsArray(arr) {
+    return Array.isArray(arr) && arr.length > 0 && arr.every(t =>
+      t && typeof t.id === 'string' && typeof t.name === 'string' && typeof t.content === 'string'
+    );
+  }
+
+  function loadInitialTabs() {
+    try {
+      const savedTabsRaw = localStorage.getItem('cleo_open_tabs');
+      if (savedTabsRaw) {
+        const parsed = JSON.parse(savedTabsRaw);
+        if (isValidTabsArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.warn('[CLEO] Failed to parse saved tabs from localStorage, falling back to defaults.', e);
+    }
+    return DEFAULT_TABS.map(t => ({ ...t }));
+  }
+
+  let openTabs = loadInitialTabs();
+
+  function loadInitialActiveTabId(tabs) {
+    try {
+      const savedActiveId = localStorage.getItem('cleo_active_tab_id');
+      if (savedActiveId && tabs.some(t => t.id === savedActiveId)) return savedActiveId;
+    } catch (e) {
+      console.warn('[CLEO] Failed to read saved active tab id from localStorage.', e);
+    }
+    return tabs[0].id;
+  }
+
+  let activeTabId = loadInitialActiveTabId(openTabs);
+
   let editor;
+
+//auto save
+function saveTabsToLocalStorage() {
+  if (editor && activeTabId) {
+    const currentTab = openTabs.find(t => t.id === activeTabId);
+    if (currentTab) currentTab.content = editor.getValue();
+  }
+  try {
+    localStorage.setItem('cleo_open_tabs', JSON.stringify(openTabs));
+    localStorage.setItem('cleo_active_tab_id', activeTabId);
+  } catch (e) {
+    console.warn('[CLEO] Failed to save tab state to localStorage.', e);
+  }
+}
+
+// Force-save open tabs + active tab instantly right before a refresh/reload/close,
+// so unsaved edits in the currently active tab are never lost.
+window.addEventListener('beforeunload', () => {
+  saveTabsToLocalStorage();
+});
+
+
 
   // Error Modal Control Functions
     // ✨ Updated Modal Function with Dynamic Title & Line Number +1 Offset Fix
@@ -825,8 +881,11 @@ document.addEventListener('focusin', function(e) {
           const file = data.files[filename] || Object.values(data.files)[0];
           if (file && editor) {
             editor.setValue(file.content);
-            openTabs[0].name = filename || 'community_script.txt';
+            const activeTab = openTabs.find(t => t.id === activeTabId) || openTabs[0];
+            activeTab.name = filename || 'community_script.txt';
+            activeTab.content = file.content;
             renderTabs();
+            saveTabsToLocalStorage();
             logLine('Community script loaded successfully into editor!', 'success');
           }
         }
@@ -870,10 +929,12 @@ document.addEventListener('focusin', function(e) {
   }
 
   function switchTab(id) {
+    // Save the outgoing tab's latest editor content before switching away from it
     if (editor && activeTabId) {
       const currentTab = openTabs.find(t => t.id === activeTabId);
       if (currentTab) currentTab.content = editor.getValue();
     }
+
     activeTabId = id;
     const targetTab = openTabs.find(t => t.id === id);
     if (targetTab && editor) {
@@ -882,6 +943,9 @@ document.addEventListener('focusin', function(e) {
       logLine(`Switched to tab: <span class="text-amber">${escapeHtml(targetTab.name)}</span>`, 'info');
     }
     renderTabs();
+    // Persist AFTER activeTabId has actually changed, so a refresh right after
+    // switching tabs restores the correct active tab instead of the old one.
+    saveTabsToLocalStorage();
   }
 
   function closeTab(e, id) {
@@ -890,9 +954,13 @@ document.addEventListener('focusin', function(e) {
     const idx = openTabs.findIndex(t => t.id === id);
     openTabs.splice(idx, 1);
     if (activeTabId === id) {
+      // switchTab() will persist the new openTabs + new activeTabId together
       switchTab(openTabs[openTabs.length - 1].id);
     } else {
+      // openTabs changed (a tab was removed) even though the active tab didn't,
+      // so this still needs to be persisted immediately.
       renderTabs();
+      saveTabsToLocalStorage();
     }
   }
 
@@ -1710,6 +1778,7 @@ if (text.includes('Command:') || text.includes('Queue') || text.includes('[Compi
         const activeTab = openTabs.find(t => t.id === activeTabId);
         if (activeTab) activeTab.name = file.name;
         renderTabs();
+        saveTabsToLocalStorage();
         logLine(`Uploaded file loaded: <span class="text-amber">${escapeHtml(file.name)}</span>`, 'success');
       }
     };
@@ -1993,8 +2062,9 @@ decompileInput.addEventListener('change', async (e) => {
       },
     });
 
-            editor = monaco.editor.create(document.getElementById('editor-container'), {
-      value: openTabs[0].content,
+            const activeTabObj = openTabs.find(t => t.id === activeTabId) || openTabs[0];
+    editor = monaco.editor.create(document.getElementById('editor-container'), {
+      value: activeTabObj.content,
       language: 'cleo',
       theme: 'cleo-dark',
       fontFamily: '"JetBrains Mono", monospace',
@@ -2011,7 +2081,15 @@ decompileInput.addEventListener('change', async (e) => {
 
 
     let lintTimeout;
+    let saveTimeout;
     editor.onDidChangeModelContent(() => {
+      // Auto-save logic
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => {
+        saveTabsToLocalStorage();
+      }, 500);
+
+      // Linter logic
       clearTimeout(lintTimeout);
       lintTimeout = setTimeout(() => {
         const useFrontendLinter = document.getElementById('frontend-linter-cb')?.checked;
@@ -2024,6 +2102,7 @@ decompileInput.addEventListener('change', async (e) => {
       }, 300);
     });
 
+
     renderTabs();
   });
 
@@ -2035,6 +2114,7 @@ decompileInput.addEventListener('change', async (e) => {
       const activeTab = openTabs.find(t => t.id === activeTabId);
       if (activeTab) activeTab.name = 'script.txt';
       renderTabs();
+      saveTabsToLocalStorage();
       logLine(`Loaded template: <span class="text-amber">${val}</span>`, 'info');
     }
   });
@@ -2228,18 +2308,6 @@ function closeCompileModal() {
   clearInterval(compileTimerInterval);
   document.getElementById('compileModal').style.display = 'none';
 }
-
-  document.getElementById('clear-btn').addEventListener('click', () => {
-    if (editor) {
-      clearEditorErrorMarkers();
-      editor.setValue('');
-      const activeTab = openTabs.find(t => t.id === activeTabId);
-      if (activeTab) activeTab.name = 'script.txt';
-      renderTabs();
-      uploadedDbBase64 = null;
-    }
-    logLine('Editor cleared.', 'info');
-  });
 
   function escapeHtml(str) {
     const div = document.createElement('div');
@@ -2487,6 +2555,20 @@ if (saveModelBtn) {
     }
   });
 }
+
+document.getElementById('clear-btn').addEventListener('click', () => {
+  if (editor) {
+    clearEditorErrorMarkers();
+    editor.setValue('');
+    const activeTab = openTabs.find(t => t.id === activeTabId);
+    if (activeTab) activeTab.name = 'script.txt';
+    renderTabs();
+    uploadedDbBase64 = null;
+    saveTabsToLocalStorage(); // LocalStorage update kar do
+  }
+  logLine('Editor cleared.', 'info');
+});
+
 
 </script>
 
