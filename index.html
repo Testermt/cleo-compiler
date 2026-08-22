@@ -3375,27 +3375,57 @@ compileBtn.addEventListener('click', async () => {
       logLine(`Command: <span class="text-amber">${escapeHtml(cmdHeader)}</span>`, 'warn');
     }
 
-    let filename = response.headers.get('x-download-filename') || currentFilename.replace(/\.txt$/i, '.cs');
+     let filename = response.headers.get('x-download-filename') || currentFilename.replace(/\.txt$/i, '.cs');
     const blob = await response.blob();
     
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
+    let savedSuccessfully = false;
+
+    // 1. Runtime Folder / Device Location Selector (File System Access API)
+    if (window.showSaveFilePicker) {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: filename,
+          types: [{
+            description: 'Compiled Script Files',
+            accept: { 'application/octet-stream': ['.cs', '.csa', '.csi'] }
+          }],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        savedSuccessfully = true;
+        logLine(`Compiled file successfully saved to chosen location: <span class="text-amber">${escapeHtml(filename)}</span>`, 'success');
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          logLine(`Save cancelled by user.`, 'warn');
+          return; // User ne khud cancel kiya toh yahin rok do
+        }
+        console.warn('Directory picker failed, falling back to standard download.', err);
+      }
+    }
+
+    // 2. Fallback agar File Picker supported na ho ya user ne error diya ho
+    if (!savedSuccessfully) {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      logLine(`Compilation succeeded — <span class="text-good">${filename}</span> downloaded via fallback.`, 'success');
+    }
 
     if (statusText) {
-      statusText.innerText = `Done in ${secondsElapsed}s! Downloading...`;
+      statusText.innerText = `Done in ${secondsElapsed}s! Saved.`;
     }
     setTimeout(() => {
       if (modal) modal.style.display = 'none';
     }, 1000);
 
     let elapsedSeconds = ((Date.now() - startTime) / 1000).toFixed(1);
-    logLine(`Compilation succeeded in <span class="text-amber">${elapsedSeconds}s</span> — <span class="text-good">${filename}</span> downloaded.`, 'success');
+    logLine(`Compilation succeeded in <span class="text-amber">${elapsedSeconds}s</span> — <span class="text-good">${filename}</span> processed.`, 'success');
     
     const token = localStorage.getItem('gh_token');
     const repo = localStorage.getItem('gh_repo');
@@ -3428,6 +3458,7 @@ compileBtn.addEventListener('click', async () => {
     compileBtnText.textContent = 'Compile & Download';
   }
 });
+
 
 
 // Modal close helper function agar defined na ho
