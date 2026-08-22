@@ -3375,50 +3375,38 @@ compileBtn.addEventListener('click', async () => {
       logLine(`Command: <span class="text-amber">${escapeHtml(cmdHeader)}</span>`, 'warn');
     }
 
-     let filename = response.headers.get('x-download-filename') || currentFilename.replace(/\.txt$/i, '.cs');
+         let filename = response.headers.get('x-download-filename') || currentFilename.replace(/\.txt$/i, '.cs');
     const blob = await response.blob();
     
-    let savedSuccessfully = false;
+    // Blob ko text mein read karke naye editor tab mein kholna
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      const fileContent = event.target.result;
 
-    // 1. Runtime Folder / Device Location Selector (File System Access API)
-    if (window.showSaveFilePicker) {
-      try {
-        const handle = await window.showSaveFilePicker({
-          suggestedName: filename,
-          types: [{
-            description: 'Compiled Script Files',
-            accept: { 'application/octet-stream': ['.cs', '.csa', '.csi'] }
-          }],
-        });
-        const writable = await handle.createWritable();
-        await writable.write(blob);
-        await writable.close();
-        savedSuccessfully = true;
-        logLine(`Compiled file successfully saved to chosen location: <span class="text-amber">${escapeHtml(filename)}</span>`, 'success');
-      } catch (err) {
-        if (err.name === 'AbortError') {
-          logLine(`Save cancelled by user.`, 'warn');
-          return; // User ne khud cancel kiya toh yahin rok do
-        }
-        console.warn('Directory picker failed, falling back to standard download.', err);
+      if (editor) {
+        clearEditorErrorMarkers();
+        const currentTab = openTabs.find(t => t.id === activeTabId);
+        if (currentTab) currentTab.content = editor.getValue();
       }
-    }
 
-    // 2. Fallback agar File Picker supported na ho ya user ne error diya ho
-    if (!savedSuccessfully) {
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-      logLine(`Compilation succeeded — <span class="text-good">${filename}</span> downloaded via fallback.`, 'success');
-    }
+      // Naya unique tab ID aur compiled filename ke sath tab create karna
+      const newId = 'tab-' + Date.now();
+      openTabs.push({ 
+        id: newId, 
+        name: filename, 
+        content: fileContent, 
+        fileBase64: btoa(unescape(encodeURIComponent(fileContent))) 
+      });
+      
+      switchTab(newId);
+      saveTabsToLocalStorage();
+
+      logLine(`Compiled script successfully opened in new tab: <span class="text-amber">${escapeHtml(filename)}</span>`, 'success');
+    };
+    reader.readAsText(blob);
 
     if (statusText) {
-      statusText.innerText = `Done in ${secondsElapsed}s! Saved.`;
+      statusText.innerText = `Done in ${secondsElapsed}s! Opening in editor...`;
     }
     setTimeout(() => {
       if (modal) modal.style.display = 'none';
@@ -3437,12 +3425,12 @@ compileBtn.addEventListener('click', async () => {
         shouldSave = confirm("Auto-save is off. Do you want to save this compiled output to GitHub?");
       }
       if (shouldSave) {
-        const reader = new FileReader();
-        reader.onload = function() {
-          const base64Data = reader.result.split(',')[1] || reader.result;
+        const b64Reader = new FileReader();
+        b64Reader.onload = function() {
+          const base64Data = b64Reader.result.split(',')[1] || b64Reader.result;
           commitToGitHub(base64Data, filename, true, false);
         };
-        reader.readAsDataURL(blob);
+        b64Reader.readAsDataURL(blob);
       }
     }
 
@@ -3458,6 +3446,7 @@ compileBtn.addEventListener('click', async () => {
     compileBtnText.textContent = 'Compile & Download';
   }
 });
+
 
 
 
