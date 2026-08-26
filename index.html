@@ -3719,14 +3719,14 @@ document.getElementById('clear-btn').addEventListener('click', () => {
 
     // ✨ Runtime Folder/Location Selector & Save Logic
     // ✨ Runtime Folder/Location Selector & Save Logic (Preserves exact user filename & extension)
+    // ✨ Final Fix: MIME type binary (octet-stream) karne se mobile browser extra .txt nahi jodeha
   document.getElementById('save-file-btn').addEventListener('click', async () => {
     if (!editor) return;
     
     const currentTab = openTabs.find(t => t.id === activeTabId);
     if (!currentTab) return;
     
-    // ✨ Yahan tab ka exact naam (extension ke sath jaise .cs ya .txt) pick hoga
-    const filename = currentTab.name || 'script.txt';
+    const exactFilename = currentTab.name ? currentTab.name.trim() : 'script.txt';
     const code = editor.getValue();
 
     if (!code.trim()) {
@@ -3734,37 +3734,40 @@ document.getElementById('clear-btn').addEventListener('click', () => {
       return;
     }
 
-    // 1. Runtime Save Location Picker (agar browser support kare)
+    // File System Access API (Runtime Folder Picker)
     if (window.showSaveFilePicker) {
       try {
         const handle = await window.showSaveFilePicker({
-          suggestedName: filename,
+          suggestedName: exactFilename,
           types: [{
-            description: 'Script / Text Files',
-            accept: { 'text/plain': ['.txt', '.cs', '.csa', '.csi', '.sc', '.scm'] }
+            description: 'Script Files',
+            accept: { 'application/octet-stream': ['.cs', '.csa', '.csi', '.sc', '.scm', '.txt'] }
           }],
         });
         const writable = await handle.createWritable();
         await writable.write(code);
         await writable.close();
-        logLine(`File successfully saved: <span class="text-amber">${escapeHtml(filename)}</span>`, 'success');
+        logLine(`File successfully saved: <span class="text-amber">${escapeHtml(exactFilename)}</span>`, 'success');
         return;
       } catch (err) {
         if (err.name === 'AbortError') return;
       }
     }
 
-    // 2. Fallback Direct Download (Uses exact tab name and extension)
-    const encodedUri = 'data:text/plain;charset=utf-8,' + encodeURIComponent(code);
+    // ✨ Blob type ko 'text/plain' se badal kar 'application/octet-stream' kar diya hai
+    const blob = new Blob([code], { type: 'application/octet-stream;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', filename); // ✨ User ka original extension retain karega
+    link.href = url;
+    link.download = exactFilename; // ✨ Ab .csa ya .cs ke baad extra .txt nahi aayega
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
 
-    logLine(`File <span class="text-amber">${escapeHtml(filename)}</span> saved successfully!`, 'success');
+    logLine(`File <span class="text-amber">${escapeHtml(exactFilename)}</span> saved successfully!`, 'success');
   });
+
 
 
 
