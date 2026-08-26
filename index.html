@@ -3718,53 +3718,54 @@ document.getElementById('clear-btn').addEventListener('click', () => {
 
 
     // ✨ Runtime Folder/Location Selector & Save Logic
+    // ✨ Runtime Folder/Location Selector & Save Logic (Preserves exact user filename & extension)
   document.getElementById('save-file-btn').addEventListener('click', async () => {
     if (!editor) return;
     
     const currentTab = openTabs.find(t => t.id === activeTabId);
     if (!currentTab) return;
     
-    const code = editor.getValue();
+    // ✨ Yahan tab ka exact naam (extension ke sath jaise .cs ya .txt) pick hoga
     const filename = currentTab.name || 'script.txt';
+    const code = editor.getValue();
 
     if (!code.trim()) {
       alert('Selected tab is empty, nothing to save!');
       return;
     }
 
-    // 1. Agar browser/WebView File System Access API support karta hai (Runtime Save Location Picker)
+    // 1. Runtime Save Location Picker (agar browser support kare)
     if (window.showSaveFilePicker) {
       try {
         const handle = await window.showSaveFilePicker({
           suggestedName: filename,
           types: [{
-            description: 'Text / Script Files',
-            accept: { 'text/plain': ['.txt', '.cs', '.csa', '.csi'] }
+            description: 'Script / Text Files',
+            accept: { 'text/plain': ['.txt', '.cs', '.csa', '.csi', '.sc', '.scm'] }
           }],
         });
         const writable = await handle.createWritable();
         await writable.write(code);
         await writable.close();
-        logLine(`File successfully saved to chosen location: <span class="text-amber">${escapeHtml(filename)}</span>`, 'success');
+        logLine(`File successfully saved: <span class="text-amber">${escapeHtml(filename)}</span>`, 'success');
         return;
       } catch (err) {
-        // Agar user ne cancel kar diya toh error ignore karo
         if (err.name === 'AbortError') return;
-        console.warn('Directory picker failed, trying direct download fallback.', err);
       }
     }
 
-    // 2. Fallback agar File Picker supported na ho
+    // 2. Fallback Direct Download (Uses exact tab name and extension)
     const encodedUri = 'data:text/plain;charset=utf-8,' + encodeURIComponent(code);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', filename);
+    link.setAttribute('download', filename); // ✨ User ka original extension retain karega
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
-    logLine(`File <span class="text-amber">${escapeHtml(filename)}</span> exported successfully!`, 'success');
+    logLine(`File <span class="text-amber">${escapeHtml(filename)}</span> saved successfully!`, 'success');
   });
+
 
 
 
