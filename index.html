@@ -35,6 +35,20 @@ document.addEventListener('focusin', function(e) {
         }
     </script>
     
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#e8a33d">
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then((reg) => console.log('ServiceWorker registered! Scope:', reg.scope))
+        .catch((err) => console.log('ServiceWorker registration failed:', err));
+    });
+  }
+</script>
+
+    
+    
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>GTA SA Online CLEO Compiler</title>
@@ -2895,8 +2909,18 @@ if (text.includes('Command:') || text.includes('Queue') || text.includes('[Compi
   // clean "Open File" action (Upload button) to open a file first, then hit
   // Decompile to validate + decompile whatever file is currently active.
   decompileBtn.addEventListener('click', () => {
+  
+  // Compile ya Decompile button click par ye check karega
+if (!navigator.onLine) {
+  alert('⚠️ Internet Connection Required!\n\nCompiling and decompiling scripts requires an active internet connection to communicate with the Sanny Builder backend server.');
+  logLine('<span class="text-bad">Operation failed: Internet connection is required for compiling/decompiling.</span>', 'error');
+  return; // Yahin rok dega aage ki process ko
+}
+
+  
     const activeTab = openTabs.find(t => t.id === activeTabId);
     const currentFilename = activeTab ? activeTab.name : '';
+
 
     if (!currentFilename || !VALID_DECOMPILE_EXT.test(currentFilename)) {
       alert('Invalid file type! Please open a compiled script (.cs, .csa, .csi, .sc, .scm) using "Open File" before decompiling.');
@@ -3240,6 +3264,14 @@ async function runDecompile(fileName, base64Data) {
   let compileTimerInterval; // Timer variable globally define kiya hai
 
 compileBtn.addEventListener('click', async () => {
+
+// Compile ya Decompile button click par ye check karega
+if (!navigator.onLine) {
+  alert('⚠️ Internet Connection Required!\n\nCompiling and decompiling scripts requires an active internet connection to communicate with the Sanny Builder backend server.');
+  logLine('<span class="text-bad">Operation failed: Internet connection is required for compiling/decompiling.</span>', 'error');
+  return; // Yahin rok dega aage ki process ko
+}
+
   let startTime = Date.now(); // ✨ Yahan compile ke start mein define kar diya
 
   if (typeof gtag === 'function') {
