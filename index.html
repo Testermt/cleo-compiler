@@ -522,18 +522,18 @@ document.addEventListener('focusin', function(e) {
   <main class="flex-1 max-w-6xl w-full mx-auto px-2 sm:px-4 py-3 flex flex-col gap-3">
 
     <div class="max-w-6xl mx-auto px-2 sm:px-4 my-2">
-  <div class="bg-amber/10 border border-amber/30 rounded-sm p-3.5 text-[12px] text-amber text-center flex flex-col items-center justify-center gap-2.5 shadow-md">
+  <div id="offline-notice" class="bg-teal/10 border border-teal/30 rounded-sm p-3.5 text-[12px] text-teal text-center flex flex-col items-center justify-center gap-2.5 shadow-md">
     <p class="leading-relaxed">
-      <strong>☕😒 Support ModderHub:</strong> Enjoying the GTA SA Online CLEO Compiler? Consider buying a coffee to help keep the server and tools running fast for mobile modders worldwide!
+      <strong>📴 Offline Mode:</strong> GTA SA Android offline compiler &amp; decompiler available — try this for fast offline compile/decompile. No server queue, no internet needed after a one-time download.
     </p>
-    <div class="flex items-center gap-2">
-      <a href="https://ko-fi.com/moderhub" target="_blank" class="bg-amber text-ink px-4 py-1.5 rounded-sm text-[11.5px] font-bold hover:bg-amber/90 transition-colors">
-        ☕ Buy Me a Coffee
-      </a>
-      <a href="https://t.me/TechboyMaster" target="_blank" class="bg-[#0088cc] text-white px-3.5 py-1.5 rounded-sm text-[11px] font-bold hover:opacity-90 transition-colors">
-        Report Bug
-      </a>
+    <label class="flex items-center gap-2 cursor-pointer text-[12px] font-semibold">
+      <input type="checkbox" id="offline-toggle" class="accent-teal w-4 h-4" /> Use Offline Mode
+    </label>
+    <div class="flex items-center gap-2 flex-wrap justify-center">
+      <button id="offline-install-btn" class="bg-teal text-ink px-4 py-1.5 rounded-sm text-[11.5px] font-bold hover:opacity-90 transition-colors">⬇ Download offline engine</button>
+      <a href="https://t.me/TechboyMaster" target="_blank" class="bg-[#0088cc] text-white px-3.5 py-1.5 rounded-sm text-[11px] font-bold hover:opacity-90 transition-colors">Report Bug</a>
     </div>
+    <p id="offline-status" class="text-[11px] text-gray-400"></p>
   </div>
 </div>
 
@@ -2911,7 +2911,7 @@ if (text.includes('Command:') || text.includes('Queue') || text.includes('[Compi
   decompileBtn.addEventListener('click', () => {
   
   // Compile ya Decompile button click par ye check karega
-if (!navigator.onLine) {
+if (!navigator.onLine && !(window.OfflineMode && OfflineMode.isOn())) {
   alert('⚠️ Internet Connection Required!\n\nCompiling and decompiling scripts requires an active internet connection to communicate with the Sanny Builder backend server.');
   logLine('<span class="text-bad">Operation failed: Internet connection is required for compiling/decompiling.</span>', 'error');
   return; // Yahin rok dega aage ki process ko
@@ -2965,6 +2965,9 @@ async function runDecompile(fileName, base64Data) {
     customLabels: document.getElementById('opt-customlabels').checked ? 1 : 0,
     customVariables: document.getElementById('opt-customvariables').checked ? 1 : 0,
   };
+
+  // 📴 Offline Mode: decompile on-device with sannycore (WebAssembly)
+  if (window.OfflineMode && await OfflineMode.runDecompile({ fileName, base64Data, selectedGame, useSource, startTime })) return;
 
   logLine(`Reading file <span class="text-amber">${escapeHtml(fileName)}</span> for decompilation…`, 'info');
   logLine(`[Queue] Request sent to server queue, waiting for processing…`, 'warn');
@@ -3266,7 +3269,7 @@ async function runDecompile(fileName, base64Data) {
 compileBtn.addEventListener('click', async () => {
 
 // Compile ya Decompile button click par ye check karega
-if (!navigator.onLine) {
+if (!navigator.onLine && !(window.OfflineMode && OfflineMode.isOn())) {
   alert('⚠️ Internet Connection Required!\n\nCompiling and decompiling scripts requires an active internet connection to communicate with the Sanny Builder backend server.');
   logLine('<span class="text-bad">Operation failed: Internet connection is required for compiling/decompiling.</span>', 'error');
   return; // Yahin rok dega aage ki process ko
@@ -3332,6 +3335,9 @@ if (!navigator.onLine) {
   }
 
   clearEditorErrorMarkers();
+
+  // 📴 Offline Mode: compile on-device with sannycore (WebAssembly); falls back to the server when it returns false
+  if (window.OfflineMode && await OfflineMode.runCompile({ code, currentFilename, selectedGame, compilerConfig, startTime })) return;
 
   // 🚀 COMPILE MODAL & LIVE TIMER START
   const modal = document.getElementById('compileModal');
@@ -3910,6 +3916,7 @@ function showInstallBanner() {
 </style>
 
 
+<script src="offline/offline-mode.js"></script>
 </body>
 
 
