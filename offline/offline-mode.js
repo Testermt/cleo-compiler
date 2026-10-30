@@ -7,6 +7,11 @@
   const FILES = ['offline-engine.js', 'sannycore.js', 'sannycore.wasm', 'sannydata.pack'];
   const $ = (id) => document.getElementById(id);
 
+  // Google Analytics (GA4) events: only counts and the game id are sent, never any script content.
+  function track(name, params) { try { if (typeof gtag === 'function') gtag('event', name, params || {}); } catch (e) { /* ignore */ } }
+  const resultOf = (r) => r.ok ? 'success' : (/Invalid edit mode|9100|not initialised/.test(r.error || '') ? 'unsupported_game' : 'error');
+  const net = () => (navigator.onLine ? 'online' : 'offline');
+
   let worker = null, seq = 0, bootOk = false;
   const pending = new Map();
 
@@ -58,7 +63,8 @@
       const r = await call('init', {});
       if (!r.ok && r.fatal) throw new Error(r.error);
       bootOk = true;
-    } catch (e) { localStorage.setItem(KEY, '0'); setStatus('❌ ' + e.message, 'text-bad'); if (b) b.disabled = false; return false; }
+      track('offline_engine_install', { result: 'success' });
+    } catch (e) { track('offline_engine_install', { result: 'fail' }); localStorage.setItem(KEY, '0'); setStatus('❌ ' + e.message, 'text-bad'); if (b) b.disabled = false; return false; }
     if (b) b.disabled = false;
     await refreshUI(); return true;
   }
@@ -89,6 +95,7 @@
     log('Compiling offline (' + selectedGame + ', sannycore WASM)…', 'info');
     try {
       const r = await call('compile', { mode: selectedGame, source: code, addExtra: !!compilerConfig.addExtraInfo, flags: 0x1420 });
+      track('offline_compile', { game: selectedGame, result: resultOf(r), ms: Date.now() - startTime, network: net() });
       if (!r.ok) {
         const unsupported = /Invalid edit mode|9100|not initialised/.test(r.error || '');
         if (unsupported && navigator.onLine) { hideModal(); log('Game "' + selectedGame + '" is not supported offline — using the server.', 'warn'); return false; }
@@ -128,6 +135,7 @@
     const m = /\.(csa|cs|csi)$/i.exec(fileName);
     const bytes = b64ToBytes(base64Data);
     const r = await call('decompile', { mode: selectedGame, bytes, useSource, scriptStyle: true, directive: m ? '.' + m[1].toLowerCase() : '' });
+    track('offline_decompile', { game: selectedGame, result: resultOf(r), ms: Date.now() - startTime, network: net() });
     if (!r.ok) {
       const unsupported = /Invalid edit mode|9100|not initialised/.test(r.error || '');
       hideModal();
@@ -162,8 +170,10 @@
     if (b) b.addEventListener('click', doInstall);
     if (t) t.addEventListener('change', async () => {
       if (t.checked && !(await isInstalled())) { t.checked = false; localStorage.setItem(KEY, '1'); await doInstall(); return; }
-      localStorage.setItem(KEY, t.checked ? '1' : '0'); refreshUI();
+      localStorage.setItem(KEY, t.checked ? '1' : '0'); track('offline_mode_toggle', { enabled: t.checked ? 'on' : 'off' }); refreshUI();
     });
     refreshUI();
+    // once per browser session: counts users who have Offline Mode switched on
+    isInstalled().then((inst) => { if (inst && isOn() && !sessionStorage.getItem('offline_active_sent')) { sessionStorage.setItem('offline_active_sent', '1'); track('offline_mode_active', { network: net() }); } });
   });
 })();
