@@ -797,6 +797,7 @@ document.addEventListener('focusin', function(e) {
           <label for="templateSelect" class="hex-addr text-gray-500 text-[10px]">TEMPLATE</label>
           <select id="templateSelect" class="bg-panel2 text-amber border border-hairline rounded-sm px-2 py-1 text-[11.5px] focus:outline-none focus:border-amber w-full sm:w-auto">
             <option value="default" selected>Select...</option>
+            <option value="helloworld">Hello World (GTA SA Mobile .csi)</option>
             <option value="spawner">Car Spawner</option>
             
           </select>
@@ -2338,6 +2339,44 @@ window.addEventListener('beforeunload', () => {
   });
 
   const TEMPLATES = {
+    helloworld: `{$CLEO .csi}
+0000:
+wait 10000
+//CHud::SetHelpMessage(char const*, unsigned short *, bool quickMessage, bool permanent, bool addToBrief, unsigned int)
+//0ACA: show_text_box "hello world"
+0DD0: 30@ = get_label_addr @text_box
+0DD1: 30@ = get_func_addr_by_cstr_name 30@
+0DD0: 38@ = get_label_addr @fxt
+0DD3: context_set_reg 5 value 5000 //unsigned int
+0DD3: context_set_reg 4 value 1 //bool addToBrief
+0DD3: context_set_reg 3 value 0 //bool permanent
+0DD3: context_set_reg 2 value 0 //bool quickMessage
+0DD3: context_set_reg 1 value 38@ //unsigned short *
+0DD3: context_set_reg 0 value 0 //char const*
+0DD2: context_call_func 30@
+end_thread
+
+:fxt
+hex
+ "H"00
+ "e"00
+ "l"00
+ "l"00
+ "o"00
+ 20 00
+ "W"00
+ "o"00
+ "r"00
+ "l"00
+ "d"00
+ 0000
+end
+
+:text_box
+hex
+ "_ZN4CHud14SetHelpMessageEPKcPtbbbj" 00
+end
+`,
     spawner: `
 // https://gtamods.com/wiki/Spawn_a_vehicle
 {$CLEO .cs}
