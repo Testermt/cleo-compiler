@@ -113,7 +113,7 @@
       clearEditorErrorMarkers();
       const cur = openTabs.find((t) => t.id === activeTabId); if (cur) cur.content = editor.getValue();
       const id = 'tab-' + Date.now();
-      openTabs.push({ id, name: filename, content: latin1(bytes), fileBase64: bytesToB64(bytes) });
+      openTabs.push({ id, name: filename, content: latin1(bytes), fileBase64: bytesToB64(bytes), binary: true });
       switchTab(id); saveTabsToLocalStorage();
       const sec = ((Date.now() - startTime) / 1000).toFixed(1);
       log('Offline compile OK in ' + sec + 's — ' + filename + ' (' + bytes.length + ' bytes)', 'success');

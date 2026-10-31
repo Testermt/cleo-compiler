@@ -526,6 +526,9 @@ document.addEventListener('focusin', function(e) {
     <p class="leading-relaxed">
       <strong>📴 Offline Mode:</strong> GTA SA Android offline compiler &amp; decompiler available — try this for fast offline compile/decompile. No server queue, no internet needed after a one-time download.
     </p>
+    <p class="text-[11.5px] leading-relaxed bg-amber/10 border border-amber/30 text-amber rounded-sm px-3 py-2">
+      <strong>🛠 Fix released:</strong> a bug in Offline Mode saved compiled files incorrectly (the saved script did not work in-game). It is fixed now. If you saved a compiled file earlier, please compile it again and save the new file.
+    </p>
     <label class="flex items-center gap-2 cursor-pointer text-[12px] font-semibold">
       <input type="checkbox" id="offline-toggle" class="accent-teal w-4 h-4" /> Use Offline Mode
     </label>
@@ -1104,7 +1107,19 @@ document.addEventListener('focusin', function(e) {
   </div>
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.49.0/min/vs/loader.min.js"></script>
+<script>
+  // Monaco: new version (0.53 = EditContext, better touch select/copy/paste on Android) with automatic fallback to the old 0.49.0
+  window.MONACO_NEW = '0.53.0'; window.MONACO_OLD = '0.49.0';
+  window.MONACO_VER = (function () { try { return sessionStorage.getItem('monaco_fallback') ? window.MONACO_OLD : window.MONACO_NEW; } catch (e) { return window.MONACO_NEW; } })();
+  document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/' + window.MONACO_VER + '/min/vs/loader.min.js"><\/script>');
+</script>
+<script>
+  if (typeof require === 'undefined' && window.MONACO_VER !== window.MONACO_OLD) {   // new loader file did not load
+    window.MONACO_VER = window.MONACO_OLD;
+    try { sessionStorage.setItem('monaco_fallback', '1'); } catch (e) {}
+    document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/' + window.MONACO_VER + '/min/vs/loader.min.js"><\/script>');
+  }
+</script>
 <script>
 
 
@@ -3120,7 +3135,7 @@ async function runDecompile(fileName, base64Data) {
     return markers;
   }
 
-  require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.49.0/min/vs' } });
+  require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/' + window.MONACO_VER + '/min/vs' } });
 
   let errorDecorations = [];
 
@@ -3216,6 +3231,7 @@ async function runDecompile(fileName, base64Data) {
       contextmenu: true, // ✨ Context menu enable karne ke liye
       quickSuggestions: true,
       padding: { top: 12 },
+      editContext: true, // EditContext API (Monaco >= 0.53): native Android touch selection / copy / paste; ignored by older versions
     });
 
 
@@ -3244,6 +3260,10 @@ async function runDecompile(fileName, base64Data) {
 
 
     renderTabs();
+  }, function (err) {
+    // editor.main of the new Monaco failed to load -> reload once with the old, known-good version
+    console.error('Monaco load failed', err);
+    if (window.MONACO_VER !== window.MONACO_OLD) { try { sessionStorage.setItem('monaco_fallback', '1'); } catch (e) {} location.reload(); }
   });
 
   document.getElementById('templateSelect').addEventListener('change', (e) => {
@@ -3775,6 +3795,12 @@ document.getElementById('clear-btn').addEventListener('click', () => {
       return;
     }
 
+    // Compiled (binary) tabs: save the exact bytes, NOT the editor text (text would be UTF-8 encoded and line endings changed -> broken script)
+    let payload = code;
+    if (currentTab.binary && currentTab.fileBase64) {
+      try { payload = Uint8Array.from(atob(currentTab.fileBase64), (c) => c.charCodeAt(0)); } catch (e) { payload = code; }
+    }
+
     // File System Access API (Runtime Folder Picker)
     if (window.showSaveFilePicker) {
       try {
@@ -3786,7 +3812,7 @@ document.getElementById('clear-btn').addEventListener('click', () => {
           }],
         });
         const writable = await handle.createWritable();
-        await writable.write(code);
+        await writable.write(payload);
         await writable.close();
         logLine(`File successfully saved: <span class="text-amber">${escapeHtml(exactFilename)}</span>`, 'success');
         return;
@@ -3796,7 +3822,7 @@ document.getElementById('clear-btn').addEventListener('click', () => {
     }
 
     // ✨ Blob type ko 'text/plain' se badal kar 'application/octet-stream' kar diya hai
-    const blob = new Blob([code], { type: 'application/octet-stream;charset=utf-8' });
+    const blob = new Blob([payload], { type: 'application/octet-stream' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
