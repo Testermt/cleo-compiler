@@ -517,6 +517,10 @@ document.addEventListener('focusin', function(e) {
           <span>Clean Labels Format</span>
           <input type="checkbox" id="opt-labelsformat" class="accent-teal w-4 h-4" checked />
         </label>
+        <label class="flex items-center justify-between p-1.5 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline" title="Shows hex data blocks as readable text, e.g. 48 00 65 00 -> &quot;H&quot;00 &quot;e&quot;00 (still compiles back to the same bytes)">
+          <span>Translate hex blocks to text</span>
+          <input type="checkbox" id="opt-translate-hex" class="accent-teal w-4 h-4" />
+        </label>
         <label class="flex items-center justify-between p-1.5 bg-panel2 rounded-sm cursor-pointer hover:bg-hairline">
           <span>Use Custom Labels</span>
           <input type="checkbox" id="opt-customlabels" class="accent-teal w-4 h-4" checked />
@@ -811,6 +815,7 @@ document.addEventListener('focusin', function(e) {
   <button id="upload-btn" class="btn-press text-[11.5px] px-2.5 py-1.5 rounded-sm border border-hairline text-gray-300 hover:text-amber transition-colors">Upload</button>
   <!-- ✨ Naya Save Icon Button -->
   <button id="save-file-btn" class="btn-press text-[11.5px] px-2.5 py-1.5 rounded-sm border border-hairline text-teal hover:text-teal hover:border-teal/50 transition-colors flex items-center justify-center" title="Save Active File">💾</button>
+  <button id="hex-translate-btn" class="btn-press text-[11.5px] px-2.5 py-1.5 rounded-sm border border-hairline text-teal hover:bg-teal/10 transition-colors" title="Translate hex blocks in the current script to readable text">🔤 Hex→Text</button>
   <button id="clear-btn" class="btn-press text-[11.5px] px-2.5 py-1.5 rounded-sm border border-hairline text-gray-400 hover:text-gray-100 transition-colors">Clear</button>
 </div>
 
@@ -2338,6 +2343,81 @@ window.addEventListener('beforeunload', () => {
     compileBtn.click();
   });
 
+// Translate decompiled "hex ... end" blocks into readable text: ASCII runs -> "text", UTF-16LE strings -> "H"00"i"00 (+ a // comment with the decoded text).
+// The result still compiles back to exactly the same bytes.
+function translateHexBlocks(text) {
+  const eol = text.indexOf('\r\n') >= 0 ? '\r\n' : '\n';
+  const lines = text.split(/\r?\n/);
+  const out = [];
+  let blocks = 0;
+  const printable = (b) => b >= 0x20 && b <= 0x7e && b !== 0x22 && b !== 0x5c;
+  const hex2 = (b) => (b < 16 ? '0' : '') + b.toString(16).toUpperCase();
+  for (let i = 0; i < lines.length; i++) {
+    if (/^\s*hex\s*$/i.test(lines[i])) {
+      const bytes = [];
+      let j = i + 1, ok = true;
+      for (; j < lines.length && !/^\s*end\s*$/i.test(lines[j]); j++) {
+        const t = lines[j].trim();
+        if (!t) continue;
+        for (const tk of t.split(/\s+/)) {
+          if (/^([0-9a-f]{2})+$/i.test(tk)) { for (let k = 0; k < tk.length; k += 2) bytes.push(parseInt(tk.substr(k, 2), 16)); }
+          else { ok = false; break; }
+        }
+        if (!ok) break;
+      }
+      if (ok && j < lines.length && bytes.length) {
+        const n = bytes.length, tokens = [], notes = [];
+        const wideAt = (p) => { let k = p, s = ''; while (k + 1 < n && printable(bytes[k]) && bytes[k + 1] === 0) { s += String.fromCharCode(bytes[k]); k += 2; } return { s, end: k }; };
+        let p = 0;
+        while (p < n) {
+          const w = wideAt(p);
+          if (w.s.length >= 2) { for (const c of w.s) tokens.push('"' + c + '"00'); notes.push('"' + w.s + '" (UTF-16)'); p = w.end; continue; }
+          let k = p, s = '';
+          while (k < n && printable(bytes[k]) && wideAt(k).s.length < 2) { s += String.fromCharCode(bytes[k]); k++; }
+          if (s.length >= 3) { tokens.push('"' + s + '"'); notes.push('"' + s + '" (ASCII)'); p = k; continue; }
+          tokens.push(hex2(bytes[p])); p++;
+        }
+        if (notes.length) out.push('// hex text: ' + notes.join('  '));
+        out.push('hex');
+        let line = ' ';
+        for (const tk of tokens) { if (line.length + tk.length + 1 > 78 && line.trim()) { out.push(line.replace(/\s+$/, '')); line = ' '; } line += tk + ' '; }
+        if (line.trim()) out.push(line.replace(/\s+$/, ''));
+        out.push(lines[j].trim().toLowerCase() === 'end' ? 'end' : lines[j]);
+        i = j; blocks++;
+        continue;
+      }
+    }
+    out.push(lines[i]);
+  }
+  return { text: out.join(eol), blocks };
+}
+
+function maybeTranslateHex(text) {
+  const cb = document.getElementById('opt-translate-hex');
+  if (!cb || !cb.checked || typeof text !== 'string') return text;
+  try {
+    const r = translateHexBlocks(text);
+    if (r.blocks) logLine(`Translated <span class="text-amber">${r.blocks}</span> hex block(s) to text.`, 'info');
+    return r.text;
+  } catch (e) { return text; }
+}
+(function () {
+  const cb = document.getElementById('opt-translate-hex');
+  if (cb) {
+    cb.checked = localStorage.getItem('cleo_translate_hex') === '1';
+    cb.addEventListener('change', () => localStorage.setItem('cleo_translate_hex', cb.checked ? '1' : '0'));
+  }
+  const btn = document.getElementById('hex-translate-btn');
+  if (btn) btn.addEventListener('click', () => {
+    if (!editor) return;
+    const r = translateHexBlocks(editor.getValue());
+    if (!r.blocks) { logLine('No hex blocks found in this script.', 'warn'); return; }
+    editor.setValue(r.text);
+    saveTabsToLocalStorage();
+    logLine(`Translated <span class="text-amber">${r.blocks}</span> hex block(s) to text.`, 'success');
+  });
+})();
+
   const TEMPLATES = {
     helloworld: `{$CLEO .csi}
 0000:
@@ -3110,7 +3190,7 @@ async function runDecompile(fileName, base64Data) {
       const newId = 'tab-' + Date.now();
       const newName = fileName.replace(/\.(cs|csa|csi|sc|scm)$/i, '.txt');
       
-      openTabs.push({ id: newId, name: newName, content: data.code });
+      openTabs.push({ id: newId, name: newName, content: maybeTranslateHex(data.code) });
       switchTab(newId);
 
       if (statusText) {

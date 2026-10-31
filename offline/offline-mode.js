@@ -145,7 +145,7 @@
     if (r.error && r.error.trim()) log(r.error.trim().split('\n').slice(0, 5).join(' | '), 'warn');
     const cur = openTabs.find((t) => t.id === activeTabId); if (cur && editor) cur.content = editor.getValue();
     const id = 'tab-' + Date.now();
-    openTabs.push({ id, name: fileName.replace(/\.(cs|csa|csi|sc|scm)$/i, '.txt'), content: r.text });
+    openTabs.push({ id, name: fileName.replace(/\.(cs|csa|csi|sc|scm)$/i, '.txt'), content: (typeof maybeTranslateHex === 'function' ? maybeTranslateHex(r.text) : r.text) });
     switchTab(id);
     const sec = ((Date.now() - startTime) / 1000).toFixed(1);
     log('Offline decompile OK in ' + sec + 's — ' + fileName + (r.kind === 'main.scm' ? ' (main.scm)' : ''), 'success');
