@@ -39,9 +39,22 @@ document.addEventListener('focusin', function(e) {
 <meta name="theme-color" content="#e8a33d">
 <script>
   if ('serviceWorker' in navigator) {
+    // When a new version of the site is deployed its service worker takes over and the page reloads once by itself.
+    const hadController = !!navigator.serviceWorker.controller;
+    let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || reloading) return;      // very first install: nothing to refresh
+      reloading = true;
+      location.reload();                            // open tabs are saved by the beforeunload handler
+    });
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js')
-        .then((reg) => console.log('ServiceWorker registered! Scope:', reg.scope))
+      navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+        .then((reg) => {
+          console.log('ServiceWorker registered! Scope:', reg.scope);
+          reg.update();                              // check for a new version on every visit
+          document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update(); });
+          setInterval(() => reg.update(), 30 * 60 * 1000);
+        })
         .catch((err) => console.log('ServiceWorker registration failed:', err));
     });
   }
